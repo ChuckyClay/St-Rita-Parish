@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin - St. Rita Parish</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header"><div class="brand"><h1>Admin Panel</h1></div></header>
+  <main class="container">
+    <section class="card">
+      <h3>Add Announcement</h3>
+      <form id="ann-form">
+        <label for="ann-text" class="small muted">Text</label>
+        <input id="ann-text" placeholder="Announcement text" />
+        <div style="margin-top:10px">
+          <button type="submit">Save Announcement</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card" style="margin-top:12px">
+      <h3>Add Song</h3>
+      <form id="song-form">
+        <label for="song-text" class="small muted">Title / lyrics</label>
+        <input id="song-text" placeholder="Song title or lyrics" />
+        <div style="margin-top:10px">
+          <button type="submit">Save Song</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card" style="margin-top:12px">
+      <h3>Send Message</h3>
+      <form id="mess-form">
+        <label for="mess-text" class="small muted">Message</label>
+        <textarea id="mess-text" placeholder="Message text" rows="3" cols="50"></textarea>
+        <div style="margin-top:10px">
+          <button type="submit">Send Message</button>
+        </div>
+      </form>
+      <div id="sms-status" class="small muted" style="margin-top:10px"></div>
+    </section>
+  </main>
+    <footer class="site-footer">&copy; St. Rita Parish <br> <i>Designed by DevTwins Developers</i></footer>
+
+  <script>
+    const annForm = document.getElementById('ann-form');
+    const songForm = document.getElementById('song-form');
+    const messForm = document.getElementById('mess-form');
+    const status = document.getElementById('sms-status');
+
+    annForm.addEventListener('submit', e=>{
+      e.preventDefault();
+      const t = document.getElementById('ann-text').value.trim();
+      if(!t) return alert('Enter announcement');
+      const arr = JSON.parse(localStorage.getItem('announcements')||'[]');
+      arr.unshift(t);
+      localStorage.setItem('announcements', JSON.stringify(arr));
+      document.getElementById('ann-text').value='';
+      alert('Saved announcement (local)');
+      window.opener?.__stRitaApp?.refresh?.();
+    });
+
+    songForm.addEventListener('submit', e=>{
+      e.preventDefault();
+      const t = document.getElementById('song-text').value.trim();
+      if(!t) return alert('Enter song');
+      const arr = JSON.parse(localStorage.getItem('songs')||'[]');
+      arr.unshift(t);
+      localStorage.setItem('songs', JSON.stringify(arr));
+      document.getElementById('song-text').value='';
+      alert('Saved song (local)');
+      window.opener?.__stRitaApp?.refresh?.();
+    });
+
+    messForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const message = document.getElementById('mess-text').value.trim();
+      if(!message) return alert('Enter a message to send');
+      status.textContent = 'Attempting to send... (prototype)';
+      try{
+        // Placeholder: POST to your backend API to send SMS
+        // await fetch('/api/send-sms', {method:'POST',headers:{'content-type':'application/json'}, body:JSON.stringify({message})});
+        await new Promise(r=>setTimeout(r,800));
+        status.textContent = 'SMS send queued (placeholder). Integrate backend to actually send messages.';
+      }catch(err){ status.textContent = 'SMS failed: '+err.message }
+    });
+  </script>
+</body>
+</html>
