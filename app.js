@@ -40,8 +40,31 @@ async function loadEventsPreview() {
   }
 }
 
+// Load daily readings preview
+async function loadDailyReadingsPreview() {
+  const container = document.getElementById('daily-readings-preview');
+  if (!container) return;
+  try {
+    const res = await fetch('readings.json');
+    const data = await res.json();
+    const today = new Date().toISOString().split('T')[0];
+    if (data.date === today) {
+      container.innerHTML = `
+        <p class="meta">${new Date(data.date).toLocaleDateString()}</p>
+        <h4>${data.firstReading.title}</h4>
+        <p>${data.firstReading.text.substring(0, 200)}...</p>
+      `;
+    } else {
+      container.innerHTML = `<p>No readings available for today.</p>`;
+    }
+  } catch (err) {
+    container.innerHTML = `<p>Unable to load daily readings.</p>`;
+  }
+}
+
 // Initialize home page
 if (document.getElementById('announcements-preview')) {
   loadAnnouncementsPreview();
   loadEventsPreview();
+  loadDailyReadingsPreview();
 }

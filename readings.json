@@ -1,5 +1,16 @@
 {
-  "date": "2025-12-23",
-  "title": "Feast Reading",
-  "content": "A reading for the day: Love one another as I have loved you. — John 13:34"
+  "date": "2025-12-25",
+  "firstReading": {
+    "title": "Isaiah 9:1-6",
+    "text": "The people who walked in darkness have seen a great light; upon those who dwelt in the land of gloom a light has shone. You have brought them abundant joy and great rejoicing, as they rejoice before you as at the harvest, as people make merry when dividing spoils. For the yoke that burdened them, the pole on their shoulder, and the rod of their taskmaster you have smashed, as on the day of Midian. For every boot that tramped in battle, every cloak rolled in blood, will be burned as fuel for flames. For a child is born to us, a son is given us; upon his shoulder dominion rests. They name him Wonder-Counselor, God-Hero, Father-Forever, Prince of Peace. His dominion is vast and forever peaceful, from David’s throne, and over his kingdom, which he confirms and sustains by judgment and justice, both now and forever. The zeal of the LORD of hosts will do this!"
+  },
+  "psalm": {
+    "title": "Psalm 96:1-2, 2-3, 11-12, 13",
+    "text": "R. Today is born our Savior, Christ the Lord.\nSing to the LORD a new song; sing to the LORD, all you lands. Sing to the LORD; bless his name.\nR. Today is born our Savior, Christ the Lord.\nAnnounce his salvation, day after day. Tell his glory among the nations; among all peoples, his wondrous deeds.\nR. Today is born our Savior, Christ the Lord.\nLet the heavens be glad and the earth rejoice; let the sea and what fills it resound; let the plains be joyful and all that is in them! Then shall all the trees of the forest exult.\nR. Today is born our Savior, Christ the Lord.\nBefore the LORD, for he comes; for he comes to rule the earth. He shall rule the world with justice and the peoples with his constancy.\nR. Today is born our Savior, Christ the Lord."
+  },
+  "gospel": {
+    "title": "Luke 2:1-14",
+    "text": "In those days a decree went out from Caesar Augustus that the whole world should be enrolled. This was the first enrollment, when Quirinius was governor of Syria. So all went to be enrolled, each to his own town. And Joseph too went up from Galilee from the town of Nazareth to Judea, to the city of David that is called Bethlehem, because he was of the house and family of David, to be enrolled with Mary, his betrothed, who was with child. While they were there, the time came for her to have her child, and she gave birth to her firstborn son. She wrapped him in swaddling clothes and laid him in a manger, because there was no room for them in the inn. Now there were shepherds in that region living in the fields and keeping the night watch over their flock. The angel of the Lord appeared to them and the glory of the Lord shone around them, and they were struck with great fear. The angel said to them, “Do not be afraid; for behold, I proclaim to you good news of great joy that will be for all the people. For today in the city of David a savior has been born for you who is Christ and Lord. And this will be a sign for you: you will find an infant wrapped in swaddling clothes and lying in a manger.” And suddenly there was a multitude of the heavenly host with the angel, praising God and saying: “Glory to God in the highest and on earth peace to those on whom his favor rests.”"
+  },
+  "source": "https://bible.usccb.org/bible/readings/122525.cfm"
 }
