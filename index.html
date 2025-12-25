@@ -8,46 +8,66 @@
 </head>
 <body>
   <header class="site-header">
-    <h1>St. Rita Parish</h1>
+    <div class="brand">
+      <h1>St. Rita Parish</h1>
+    </div>
     <nav>
-      <a href="#home" data-view="home" class="active">Home</a>
-      <a href="#announcements" data-view="announcements">Announcements</a>
-      <a href="#songs" data-view="songs">Songs</a>
-      <a href="#groups" data-view="groups">Groups</a>
+      <a href="index.html" class="active">Home</a>
+      <a href="about.html">About</a>
+      <a href="mass-sacraments.html">Mass & Sacraments</a>
+      <a href="groups-ministries.html">Groups & Ministries</a>
+      <a href="announcements-events.html">Announcements & Events</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="contact.html">Contact</a>
       <a href="admin.html" target="_blank">Admin</a>
     </nav>
   </header>
 
-  <main id="app">
-    <section id="home" class="view">
-      <h2>Daily Readings</h2>
-      <div id="reading-date" class="meta"></div>
-      <article id="daily-reading" class="card">Loading today's readings...</article><br>
-      <button id="refresh-readings">Refresh</button>
+  <main class="container">
+    <section class="hero">
+      <h2>Welcome to St. Rita Parish</h2>
+      <p>We are a vibrant Catholic community dedicated to worship, service, and fellowship. Join us in celebrating our faith and building a stronger community.</p>
     </section>
 
-    <section id="announcements" class="view hidden">
-      <h2>Announcements</h2>
-      <ul id="announcements-list" class="list"></ul>
+    <section class="mass-schedule">
+      <h2>Mass Schedule</h2>
+      <div class="schedule-grid">
+        <div class="card">
+          <h3>Sunday Masses</h3>
+          <ul>
+            <li>8:00 AM</li>
+            <li>10:00 AM</li>
+            <li>12:00 PM</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Weekday Masses</h3>
+          <ul>
+            <li>Monday - Friday: 7:00 AM</li>
+            <li>Saturday: 9:00 AM</li>
+          </ul>
+        </div>
+      </div>
     </section>
 
-    <section id="songs" class="view hidden">
-      <h2>Songs</h2>
-      <ul id="songs-list" class="list"></ul>
+    <section class="announcements-preview">
+      <h2>Latest Announcements</h2>
+      <div id="announcements-preview" class="card-list"></div>
+      <a href="announcements-events.html" class="btn">View All Announcements</a>
     </section>
 
-    <section id="groups" class="view hidden">
-      <h2>Groups</h2>
-      <ul class="list">
-        <li><a href="#">CWA (Women's Group)</a></li>
-        <li><a href="#">CMA (Men's Group)</a></li>
-        <li><a href="#">Youth Group</a></li>
-        <li><a href="#">Choir Group</a></li>
-      </ul>
+    <section class="events-preview">
+      <h2>Upcoming Events</h2>
+      <div id="events-preview" class="card-list"></div>
+      <a href="announcements-events.html" class="btn">View All Events</a>
     </section>
   </main>
 
-  <footer class="site-footer">&copy; St. Rita Parish <br> <i>Designed by DevTwins Developers</i></footer>
+  <footer class="site-footer">&copy; 2025 St. Rita Parish <br> <i>Designed by DevTwins Developers</i></footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
 
   <script src="app.js"></script>
 </body>
