@@ -70,12 +70,10 @@ if (document.getElementById('announcements-preview')) {
 }
 
 // Toggle menu for mobile
-document.addEventListener('DOMContentLoaded', function() {
-  const menuToggle = document.getElementById('menu-toggle');
-  const nav = document.querySelector('.site-header nav');
-  if (menuToggle && nav) {
-    menuToggle.addEventListener('click', function() {
-      nav.classList.toggle('open');
-    });
-  }
-});
+const menuToggle = document.getElementById('menu-toggle');
+const nav = document.querySelector('.site-header nav');
+if (menuToggle && nav) {
+  menuToggle.addEventListener('click', function() {
+    nav.classList.toggle('open');
+  });
+}

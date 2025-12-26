@@ -35,6 +35,7 @@ body{
   align-items:center;
   justify-content:space-between;
   gap:12px;
+  position: relative;
 }
 .site-header .brand{
     display:flex;
