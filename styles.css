@@ -89,7 +89,7 @@ main{
     background:var(--card-bg);
     padding:16px;
     border-radius:var(--radius);
-    box-shadow:0 6px 18px rgba(17,24,39,0.06);
+    box-shadow:0 6px 18px rgba(243, 67, 3, 0.06);
 }
 
 .meta{
@@ -190,6 +190,7 @@ button{
   }
   .card-list {
     grid-template-columns: 1fr;
+  }
 .small{
     font-size:0.9rem;
     color:var(--muted);
@@ -216,4 +217,5 @@ form input{
 a:focus{
     outline:2px dashed rgba(42,75,45,0.15);
     outline-offset:3px;
+}
 }

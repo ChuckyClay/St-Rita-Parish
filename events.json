@@ -10,14 +10,14 @@
     "id": 2,
     "title": "Christmas Day Mass",
     "date": "2025-12-25",
-    "time": "10:00 AM",
+    "time": "11:00 AM",
     "description": "Morning Mass on Christmas Day."
   },
   {
     "id": 3,
     "title": "New Year's Eve Prayer Service",
     "date": "2025-12-31",
-    "time": "9:00 PM",
+    "time": "8:00 PM",
     "description": "Join us for prayers and reflections as we welcome the new year."
   }
 ]
