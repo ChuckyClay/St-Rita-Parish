@@ -67,6 +67,42 @@ body{
     color:#fff;
 }
 
+.menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+}
+
+.menu-toggle:hover {
+    background: rgba(255,255,255,0.04);
+}
+
+@media (max-width: 768px) {
+    .menu-toggle {
+        display: block;
+    }
+    .site-header nav {
+        display: none;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        width: 250px;
+        background: var(--brand);
+        flex-direction: column;
+        padding: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        z-index: 1000;
+    }
+    .site-header nav.open {
+        display: flex;
+    }
+}
+
 .container{
     max-width:var(--max-width);
     margin:20px auto;
