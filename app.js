@@ -77,3 +77,9 @@ if (menuToggle && nav) {
     nav.classList.toggle('open');
   });
 }
+
+document.body.addEventListener("click", (e) => {
+  if (!nav.contains(e.target) && e.target !== menuToggle) {
+    nav.classList.remove('open');
+  }
+});
