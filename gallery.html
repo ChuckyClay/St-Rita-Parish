@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="styles.css">
 </head>
   <body>
+
+
     <header class="site-header">
       <div class="brand">
         <h1>St. Rita Parish</h1>
@@ -27,33 +29,19 @@
     </header>
 
     <main class="container">
-      <div class="gallery-container">
-        <h1 class="gallery-title">Parish Gallery</h1>
-        <p class="gallery-subtitle">A collection of moments from parish life: worship, sacraments, celebrations, and community.</p>
-        <div class="gallery-filters" role="tablist" aria-label="Gallery Categories">
-          <button class="gallery-filter-btn active" data-category="all" role="tab" aria-selected="true">All</button>
-          <button class="gallery-filter-btn" data-category="Mass & Liturgy" role="tab">Mass & Liturgy</button>
-          <button class="gallery-filter-btn" data-category="Sacraments" role="tab">Sacraments</button>
-          <button class="gallery-filter-btn" data-category="Feasts & Seasons" role="tab">Feasts & Seasons</button>
-          <button class="gallery-filter-btn" data-category="Choir & Youth" role="tab">Choir & Youth</button>
-          <button class="gallery-filter-btn" data-category="Parish Activities" role="tab">Parish Activities</button>
-        </div>
-        <div id="gallery-grid" class="gallery-grid" aria-live="polite"></div>
-        <button id="gallery-loadmore" class="gallery-loadmore" style="display:none">Load More</button>
+      <div class="gallery-simple-container">
+        <h1 class="gallery-simple-title"> Parish Gallery</h1>
+        <p class="gallery-simple-subtitle">A glimpse into parish life and community moments.</p>
+        <div id="gallery-grid" class="gallery-simple-grid" aria-live="polite"></div>
       </div>
     </main>
 
-    <!-- Modal for lightbox -->
-    <div id="gallery-modal" class="gallery-modal" role="dialog" aria-modal="true" aria-label="Image viewer">
-      <div class="gallery-modal-content">
-        <button class="gallery-modal-close" aria-label="Close">&times;</button>
-        <img class="gallery-modal-img" src="" alt="" />
-        <div class="gallery-modal-caption"></div>
-        <div class="gallery-modal-date"></div>
-        <div class="gallery-modal-nav">
-          <button class="gallery-modal-nav-btn" id="gallery-prev" aria-label="Previous image">&#8592; Prev</button>
-          <button class="gallery-modal-nav-btn" id="gallery-next" aria-label="Next image">Next &#8594;</button>
-        </div>
+    <!-- Simple Modal for lightbox -->
+    <div id="gallery-modal" class="gallery-simple-modal" role="dialog" aria-modal="true" aria-label="Image viewer" tabindex="-1">
+      <div class="gallery-simple-modal-content">
+        <button class="gallery-simple-modal-close" aria-label="Close">&times;</button>
+        <img class="gallery-simple-modal-img" src="" alt="" />
+        <div class="gallery-simple-modal-caption"></div>
       </div>
     </div>
 

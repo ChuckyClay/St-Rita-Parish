@@ -1,5 +1,6 @@
 // Parish Gallery JavaScript - gallery.js
-// Categories for filtering
+
+// Run gallery code immediately (script is loaded at end of body)
 defineGallery();
 
 function defineGallery() {
@@ -16,54 +17,63 @@ function defineGallery() {
   const modalPrev = document.getElementById('gallery-prev');
   const modalNext = document.getElementById('gallery-next');
 
-  let modalIndex = 0;
 
-  const images = [
-    {
-      src: 'easter.jpg',
-      alt: 'Easter Mass',
-      caption: 'Easter Sunday Mass celebration',
-      date: '2025-03-31',
-      category: 'Mass & Liturgy'
-    },
-    {
-      src: 'baptism.jpg',
-      alt: 'Baptism Ceremony',
-      caption: 'Baptism of new parishioners',
-      date: '2025-04-15',
-      category: 'Sacraments'
-    },
-    {
-      src: 'choir.jpg',
-      alt: 'Parish Choir',
-      caption: 'Parish choir performing during Mass',
-      date: '2025-12-24',
-      category: 'Choir & Youth'
-    },
-    {
-      src: 'christi.jpg',
-      alt: 'Corpus Christi',
-      caption: 'Corpus Christi procession',
-      date: '2025-06-08',
-      category: 'Feasts & Seasons'
-    },
-    {
-      src: 'youth.jpg',
-      alt: 'Youth Group',
-      caption: 'Youth group gathering',
-      date: '2025-08-12',
-      category: 'Choir & Youth'
-    },
-    {
-      src: 'confirmation.jpg',
-      alt: 'Confirmation',
-      caption: 'Confirmation Mass with Bishop',
-      date: '2025-05-20',
-      category: 'Sacraments'
+  // Simple, clean, accessible gallery
+  document.addEventListener('DOMContentLoaded', function() {
+    // Placeholder images and captions (replace with your own if desired)
+    const images = [
+      { src: 'easter.jpg', alt: 'Easter Mass', caption: 'Easter Sunday Mass celebration' },
+      { src: 'baptism.jpg', alt: 'Baptism', caption: 'Baptism of new parishioners' },
+      { src: 'choir.jpg', alt: 'Parish Choir', caption: 'Parish choir performing during Mass' },
+      { src: 'christi.jpg', alt: 'Corpus Christi', caption: 'Corpus Christi procession' },
+      { src: 'youth.jpg', alt: 'Youth Group', caption: 'Youth group gathering' },
+      { src: 'confirmation.jpg', alt: 'Confirmation', caption: 'Confirmation Mass with Bishop' }
+    ];
+
+    const grid = document.getElementById('gallery-grid');
+    const modal = document.getElementById('gallery-modal');
+    const modalImg = modal.querySelector('.gallery-simple-modal-img');
+    const modalCaption = modal.querySelector('.gallery-simple-modal-caption');
+    const modalClose = modal.querySelector('.gallery-simple-modal-close');
+
+    // Render gallery grid
+    images.forEach((img, idx) => {
+      const item = document.createElement('div');
+      item.className = 'gallery-simple-item';
+      item.tabIndex = 0;
+      item.setAttribute('role', 'button');
+      item.setAttribute('aria-label', img.caption);
+      item.innerHTML = `
+        <img class="gallery-simple-img" src="${img.src}" alt="${img.alt}" loading="lazy" />
+        <div class="gallery-simple-caption">${img.caption || ''}</div>
+      `;
+      item.addEventListener('click', () => openModal(idx));
+      item.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') openModal(idx); });
+      grid.appendChild(item);
+    });
+
+    let modalIndex = 0;
+    function openModal(idx) {
+      modalIndex = idx;
+      showModalImage();
+      modal.classList.add('active');
+      modal.focus();
+      document.body.style.overflow = 'hidden';
     }
-  ];
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    function closeModal() {
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    function showModalImage() {
+      const img = images[modalIndex];
+      modalImg.src = img.src;
+      modalImg.alt = img.alt;
+      modalCaption.textContent = img.caption || '';
+    }
+    modalClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+    modal.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+  });
     modalClose.focus();
   }
   function closeModal() {

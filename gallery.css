@@ -1,128 +1,78 @@
 /* Parish Gallery Styles - gallery.css */
-:root {
-  --brand: #2a4b2d;
-  --secondary: #007bff;
-  --bg: #f6f7fb;
-  --card-bg: #fff;
-  --muted: #666;
-  --radius: 12px;
-  --gap: 18px;
-}
+
 body {
-  background: var(--bg);
+  background: #f6f7fb;
   color: #222;
   font-family: 'Segoe UI', Arial, sans-serif;
   margin: 0;
   padding: 0;
 }
-.gallery-container {
-  max-width: 1100px;
+
+.gallery-simple-container {
+  max-width: 900px;
   margin: 0 auto;
-  padding: 1.5rem 1rem 3rem 1rem;
+  padding: 2rem 1rem 3rem 1rem;
 }
-.gallery-title {
-  font-size: 2rem;
-  color: var(--brand);
+.gallery-simple-title {
+  font-size: 2.2rem;
+  color: #2a4b2d;
   margin-bottom: 0.2em;
   text-align: center;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
-.gallery-subtitle {
-  color: var(--muted);
+.gallery-simple-subtitle {
+  color: #666;
   font-size: 1.1rem;
   margin-bottom: 2em;
   text-align: center;
 }
-.gallery-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  justify-content: center;
-  margin-bottom: 2em;
-}
-.gallery-filter-btn {
-  background: #e7ecef;
-  color: var(--brand);
-  border: none;
-  border-radius: var(--radius);
-  padding: 0.5em 1.2em;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.gallery-filter-btn.active, .gallery-filter-btn:focus {
-  background: var(--brand);
-  color: #fff;
-  outline: none;
-}
-.gallery-grid {
+.gallery-simple-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--gap);
+  gap: 1.2rem;
 }
 @media (min-width: 700px) {
-  .gallery-grid {
+  .gallery-simple-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
-@media (min-width: 1000px) {
-  .gallery-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-.gallery-item {
-  background: var(--card-bg);
-  border-radius: var(--radius);
+.gallery-simple-item {
+  background: #fff;
+  border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.2s, transform 0.2s;
 }
-.gallery-item:focus {
-  outline: 2px solid var(--secondary);
+.gallery-simple-item:focus {
+  outline: 2px solid #007bff;
 }
-.gallery-img {
+.gallery-simple-img {
   width: 100%;
   height: 180px;
   object-fit: cover;
-  border-radius: var(--radius) var(--radius) 0 0;
+  border-radius: 12px 12px 0 0;
   transition: transform 0.2s;
 }
-.gallery-item:hover .gallery-img {
-  transform: scale(1.03);
+.gallery-simple-item:hover .gallery-simple-img {
+  transform: scale(1.04);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
 }
-.gallery-caption {
+.gallery-simple-caption {
   padding: 0.7em 1em 0.7em 1em;
   font-size: 1rem;
-  color: var(--muted);
+  color: #666;
   background: #f9fafb;
-  border-radius: 0 0 var(--radius) var(--radius);
-  min-height: 3.5em;
+  border-radius: 0 0 12px 12px;
+  min-height: 2.5em;
+  text-align: center;
 }
-.gallery-date {
-  display: block;
-  font-size: 0.9em;
-  color: #999;
-  margin-top: 0.2em;
-}
-.gallery-loadmore {
-  display: block;
-  margin: 2em auto 0 auto;
-  background: var(--secondary);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius);
-  padding: 0.7em 2em;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.gallery-loadmore:hover, .gallery-loadmore:focus {
-  background: #0056b3;
-}
+
 /* Modal Styles */
-.gallery-modal {
+.gallery-simple-modal {
   display: none;
   position: fixed;
   z-index: 1000;
@@ -132,12 +82,12 @@ body {
   align-items: center;
   transition: background 0.3s;
 }
-.gallery-modal.active {
+.gallery-simple-modal.active {
   display: flex;
 }
-.gallery-modal-content {
+.gallery-simple-modal-content {
   background: #fff;
-  border-radius: var(--radius);
+  border-radius: 12px;
   max-width: 95vw;
   max-height: 90vh;
   box-shadow: 0 8px 32px rgba(0,0,0,0.18);
@@ -147,56 +97,30 @@ body {
   align-items: center;
   padding: 1.5em 1em 1em 1em;
 }
-.gallery-modal-img {
+.gallery-simple-modal-img {
   max-width: 80vw;
   max-height: 60vh;
-  border-radius: var(--radius);
+  border-radius: 12px;
   margin-bottom: 1em;
 }
-.gallery-modal-caption {
-  color: var(--muted);
+.gallery-simple-modal-caption {
+  color: #666;
   font-size: 1.1em;
   text-align: center;
   margin-bottom: 0.5em;
 }
-.gallery-modal-date {
-  color: #999;
-  font-size: 0.95em;
-  text-align: center;
-}
-.gallery-modal-close {
+.gallery-simple-modal-close {
   position: absolute;
   top: 0.7em;
   right: 1em;
   background: none;
   border: none;
   font-size: 2rem;
-  color: var(--brand);
+  color: #2a4b2d;
   cursor: pointer;
   z-index: 10;
   transition: color 0.2s;
 }
-.gallery-modal-close:hover, .gallery-modal-close:focus {
-  color: var(--secondary);
-}
-.gallery-modal-nav {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  margin-top: 0.5em;
-}
-.gallery-modal-nav-btn {
-  background: #e7ecef;
-  color: var(--brand);
-  border: none;
-  border-radius: var(--radius);
-  padding: 0.5em 1.2em;
-  font-size: 1.1rem;
-  cursor: pointer;
-  margin: 0 1em;
-  transition: background 0.2s;
-}
-.gallery-modal-nav-btn:hover, .gallery-modal-nav-btn:focus {
-  background: var(--brand);
-  color: #fff;
+.gallery-simple-modal-close:hover, .gallery-simple-modal-close:focus {
+  color: #007bff;
 }
