@@ -3,137 +3,63 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Gallery - St. Rita Parish</title>
+  <title>Parish Gallery - St. Rita Parish</title>
+  <link rel="stylesheet" href="gallery.css">
   <link rel="stylesheet" href="styles.css">
-  <style>
-    .gallery-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1rem;
-    }
-    .gallery-item {
-      cursor: pointer;
-      overflow: hidden;
-      border-radius: var(--radius);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      transition: transform 0.3s;
-    }
-    .gallery-item:hover {
-      transform: scale(1.05);
-    }
-    .gallery-item img {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.8);
-      justify-content: center;
-      align-items: center;
-    }
-    .modal-content {
-      max-width: 90%;
-      max-height: 90%;
-    }
-    .modal-content img {
-      width: 100%;
-      height: auto;
-    }
-    .close {
-      position: absolute;
-      top: 10px;
-      right: 25px;
-      color: white;
-      font-size: 35px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-  </style>
 </head>
-<body>
-  <header class="site-header">
-    <div class="brand">
-      <h1>St. Rita Parish</h1>
+  <body>
+    <header class="site-header">
+      <div class="brand">
+        <h1>St. Rita Parish</h1>
+      </div>
+      <button id="menu-toggle" class="menu-toggle">☰</button>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="mass-sacraments.html">Mass & Sacraments</a>
+        <a href="groups-ministries.html">Groups & Ministries</a>
+        <a href="announcements-events.html">Announcements & Events</a>
+        <a href="daily-readings.html">Daily Readings</a>
+        <a href="gallery.html" class="active">Gallery</a>
+        <a href="contact.html">Contact</a>
+        <a href="admin.html" target="_blank">Admin</a>
+      </nav>
+    </header>
+
+    <main class="container">
+      <div class="gallery-container">
+        <h1 class="gallery-title">Parish Gallery</h1>
+        <p class="gallery-subtitle">A collection of moments from parish life: worship, sacraments, celebrations, and community.</p>
+        <div class="gallery-filters" role="tablist" aria-label="Gallery Categories">
+          <button class="gallery-filter-btn active" data-category="all" role="tab" aria-selected="true">All</button>
+          <button class="gallery-filter-btn" data-category="Mass & Liturgy" role="tab">Mass & Liturgy</button>
+          <button class="gallery-filter-btn" data-category="Sacraments" role="tab">Sacraments</button>
+          <button class="gallery-filter-btn" data-category="Feasts & Seasons" role="tab">Feasts & Seasons</button>
+          <button class="gallery-filter-btn" data-category="Choir & Youth" role="tab">Choir & Youth</button>
+          <button class="gallery-filter-btn" data-category="Parish Activities" role="tab">Parish Activities</button>
+        </div>
+        <div id="gallery-grid" class="gallery-grid" aria-live="polite"></div>
+        <button id="gallery-loadmore" class="gallery-loadmore" style="display:none">Load More</button>
+      </div>
+    </main>
+
+    <!-- Modal for lightbox -->
+    <div id="gallery-modal" class="gallery-modal" role="dialog" aria-modal="true" aria-label="Image viewer">
+      <div class="gallery-modal-content">
+        <button class="gallery-modal-close" aria-label="Close">&times;</button>
+        <img class="gallery-modal-img" src="" alt="" />
+        <div class="gallery-modal-caption"></div>
+        <div class="gallery-modal-date"></div>
+        <div class="gallery-modal-nav">
+          <button class="gallery-modal-nav-btn" id="gallery-prev" aria-label="Previous image">&#8592; Prev</button>
+          <button class="gallery-modal-nav-btn" id="gallery-next" aria-label="Next image">Next &#8594;</button>
+        </div>
+      </div>
     </div>
-    <button id="menu-toggle" class="menu-toggle">☰</button>
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="about.html">About</a>
-      <a href="mass-sacraments.html">Mass & Sacraments</a>
-      <a href="groups-ministries.html">Groups & Ministries</a>
-      <a href="announcements-events.html">Announcements & Events</a>
-      <a href="daily-readings.html">Daily Readings</a>
-      <a href="gallery.html" class="active">Gallery</a>
-      <a href="contact.html">Contact</a>
-      <a href="admin.html" target="_blank">Admin</a>
-    </nav>
-  </header>
 
-  <main class="container">
-    <section>
-      <h2>Gallery</h2>
-      <div id="gallery" class="gallery-grid"></div>
-    </section>
-  </main>
+    <footer class="site-footer">&copy; 2025 St. Rita Parish <br> <i>Designed by DevTwins Developers</i></footer>
 
-  <div id="modal" class="modal">
-    <span class="close">&times;</span>
-    <div class="modal-content">
-      <img id="modal-img" src="" alt="">
-      <p id="modal-caption"></p>
-    </div>
-  </div>
-
-  <footer class="site-footer">&copy; 2025 St. Rita Parish <br> <i>Designed by DevTwins Developers</i></footer>
-
-  <script>
-    async function loadGallery() {
-      const container = document.getElementById('gallery');
-      try {
-        const res = await fetch('gallery.json');
-        const images = await res.json();
-        container.innerHTML = images.map(img => `
-          <div class="gallery-item" data-src="${img.src}" data-caption="${img.caption}">
-            <img src="${img.src}" alt="${img.alt}">
-          </div>
-        `).join('');
-        
-        // Add click listeners
-        document.querySelectorAll('.gallery-item').forEach(item => {
-          item.addEventListener('click', () => {
-            const modal = document.getElementById('modal');
-            const modalImg = document.getElementById('modal-img');
-            const modalCaption = document.getElementById('modal-caption');
-            modalImg.src = item.dataset.src;
-            modalCaption.textContent = item.dataset.caption;
-            modal.style.display = 'flex';
-          });
-        });
-      } catch (err) {
-        container.innerHTML = '<p>Unable to load gallery.</p>';
-      }
-    }
-
-    // Close modal
-    document.querySelector('.close').addEventListener('click', () => {
-      document.getElementById('modal').style.display = 'none';
-    });
-
-    window.addEventListener('click', (e) => {
-      if (e.target === document.getElementById('modal')) {
-        document.getElementById('modal').style.display = 'none';
-      }
-    });
-
-    loadGallery();
-  </script>
-  <script src="app.js"></script>
-</body>
+    <script src="gallery.js"></script>
+    <script src="app.js"></script>
+  </body>
 </html>
