@@ -9,37 +9,83 @@
 <body>
   <header class="site-header"><div class="brand"><h1>Admin Panel</h1></div></header>
   <main class="container">
-    <section class="card">
-      <h3>Add Announcement</h3>
-      <form id="ann-form">
-        <label for="ann-text" class="small muted">Text</label><br>
-        <input id="ann-text" placeholder="Announcement text" />
-        <div style="margin-top:10px">
-          <button type="submit">Save Announcement</button>
-        </div>
+    <section id="auth-section" class="card">
+      <h3>Admin Login</h3>
+      <form id="admin-login-form">
+        <label for="admin-password">Password:</label>
+        <input type="password" id="admin-password" required />
+        <button type="submit">Login</button>
       </form>
+      <div id="auth-error" class="small muted" style="color:red;margin-top:10px;"></div>
     </section>
-
-    <section class="card" style="margin-top:12px">
-      <h3>Send Message</h3>
-      <form id="mess-form">
-        <label for="mess-text" class="small muted">Message</label><br>
-        <textarea id="mess-text" placeholder="Message text" rows="3"></textarea>
-        <div style="margin-top:10px">
-          <button type="submit">Send Message</button>
-        </div>
-      </form>
-      <div id="sms-status" class="small muted" style="margin-top:10px"></div>
+    <section id="admin-content" style="display:none;">
+      <section class="card">
+        <h3>Add Announcement</h3>
+        <form id="ann-form">
+          <label for="ann-text" class="small muted">Text</label><br>
+          <input id="ann-text" placeholder="Announcement text" />
+          <div style="margin-top:10px">
+            <button type="submit">Save Announcement</button>
+          </div>
+        </form>
+      </section>
+      <section class="card" style="margin-top:12px">
+        <h3>Send Message</h3>
+        <form id="mess-form">
+          <label for="mess-text" class="small muted">Message</label><br>
+          <textarea id="mess-text" placeholder="Message text" rows="3"></textarea>
+          <div style="margin-top:10px">
+            <button type="submit">Send Message</button>
+          </div>
+        </form>
+        <div id="sms-status" class="small muted" style="margin-top:10px"></div>
+      </section>
+      <section class="card" style="margin-top:12px">
+        <h3>Upload Media</h3>
+        <form id="media-form">
+          <label for="media-type">Type:</label>
+          <select id="media-type">
+            <option value="image">Image</option>
+            <option value="video">Video</option>
+          </select>
+          <label for="media-src">Source (URL or file name):</label>
+          <input id="media-src" placeholder="e.g. easter.jpg or https://..." />
+          <label for="media-caption">Caption:</label>
+          <input id="media-caption" placeholder="Caption" />
+          <label for="media-event">Event:</label>
+          <input id="media-event" placeholder="e.g. easter" />
+          <label for="media-date">Date:</label>
+          <input id="media-date" type="date" />
+          <button type="submit">Upload</button>
+        </form>
+        <div id="media-status" class="small muted" style="margin-top:10px"></div>
+      </section>
+      <section class="card" style="margin-top:12px">
+        <h3>Subscribed Phone Numbers</h3>
+        <ul id="phone-list" class="small muted"></ul>
+      </section>
     </section>
   </main>
     <footer class="site-footer">&copy; St. Rita Parish <br> <i>Designed by DevTwins Developers</i></footer>
 
   <script>
-    const annForm = document.getElementById('ann-form');
-    const songForm = document.getElementById('song-form');
-    const messForm = document.getElementById('mess-form');
-    const status = document.getElementById('sms-status');
+    // Simple password authentication
+    const adminPassword = 'stRita2026'; // Change this to a secure password
+    const authSection = document.getElementById('auth-section');
+    const adminContent = document.getElementById('admin-content');
+    document.getElementById('admin-login-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const pw = document.getElementById('admin-password').value;
+      if (pw === adminPassword) {
+        authSection.style.display = 'none';
+        adminContent.style.display = '';
+      } else {
+        document.getElementById('auth-error').textContent = 'Incorrect password.';
+      }
+    });
 
+    // Announcement logic
+    const annForm = document.getElementById('ann-form');
     annForm.addEventListener('submit', e=>{
       e.preventDefault();
       const t = document.getElementById('ann-text').value.trim();
@@ -49,21 +95,11 @@
       localStorage.setItem('announcements', JSON.stringify(arr));
       document.getElementById('ann-text').value='';
       alert('Saved announcement (local)');
-      window.opener?.__stRitaApp?.refresh?.();
     });
 
-    songForm.addEventListener('submit', e=>{
-      e.preventDefault();
-      const t = document.getElementById('song-text').value.trim();
-      if(!t) return alert('Enter song');
-      const arr = JSON.parse(localStorage.getItem('songs')||'[]');
-      arr.unshift(t);
-      localStorage.setItem('songs', JSON.stringify(arr));
-      document.getElementById('song-text').value='';
-      alert('Saved song (local)');
-      window.opener?.__stRitaApp?.refresh?.();
-    });
-
+    // Message logic
+    const messForm = document.getElementById('mess-form');
+    const status = document.getElementById('sms-status');
     messForm.addEventListener('submit', async (e)=>{
       e.preventDefault();
       const message = document.getElementById('mess-text').value.trim();
@@ -71,11 +107,38 @@
       status.textContent = 'Attempting to send... (prototype)';
       try{
         // Placeholder: POST to your backend API to send SMS
-        // await fetch('/api/send-sms', {method:'POST',headers:{'content-type':'application/json'}, body:JSON.stringify({message})});
         await new Promise(r=>setTimeout(r,800));
         status.textContent = 'SMS send queued (placeholder). Integrate backend to actually send messages.';
       }catch(err){ status.textContent = 'SMS failed: '+err.message }
     });
+
+    // Media upload logic
+    const mediaForm = document.getElementById('media-form');
+    mediaForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const type = document.getElementById('media-type').value;
+      const src = document.getElementById('media-src').value.trim();
+      const caption = document.getElementById('media-caption').value.trim();
+      const event = document.getElementById('media-event').value.trim();
+      const date = document.getElementById('media-date').value;
+      if (!src || !caption || !event || !date) {
+        document.getElementById('media-status').textContent = 'Please fill all fields.';
+        return;
+      }
+      let media = JSON.parse(localStorage.getItem('galleryMedia') || '[]');
+      media.push({ type, src, caption, event, date });
+      localStorage.setItem('galleryMedia', JSON.stringify(media));
+      document.getElementById('media-status').textContent = 'Media uploaded (local only).';
+      mediaForm.reset();
+    });
+
+    // Show subscribed phone numbers
+    function renderPhoneList() {
+      const phoneList = document.getElementById('phone-list');
+      let phones = JSON.parse(localStorage.getItem('smsPhones') || '[]');
+      phoneList.innerHTML = phones.length ? phones.map(p => `<li>${p}</li>`).join('') : '<li>No numbers subscribed.</li>';
+    }
+    renderPhoneList();
   </script>
 </body>
 </html>

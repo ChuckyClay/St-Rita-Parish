@@ -48,14 +48,42 @@ async function loadDailyReadingsPreview() {
     const res = await fetch('readings.json');
     const data = await res.json();
     const today = new Date().toISOString().split('T')[0];
-    if (data.date === today) {
-      container.innerHTML = `
-        <p class="meta">${new Date(data.date).toLocaleDateString()}</p>
-        <h4>${data.firstReading.title}</h4>
-        <p>${data.firstReading.text.substring(0, 200)}...</p>
-      `;
-    } else {
-      container.innerHTML = `<p>No readings available for today.</p>`;
+    // Default language is English
+    let currentLang = localStorage.getItem('readingLang') || 'en';
+    function renderReadings(lang) {
+      if (data.date === today) {
+        container.innerHTML = `
+          <p class="meta">${new Date(data.date).toLocaleDateString()}</p>
+          <h4>${data.firstReading[lang].title}</h4>
+          <p>${data.firstReading[lang].text.substring(0, 200)}...</p>
+          <h4>${data.psalm[lang].title}</h4>
+          <p>${data.psalm[lang].text.substring(0, 200)}...</p>
+          <h4>${data.gospel[lang].title}</h4>
+          <p>${data.gospel[lang].text.substring(0, 200)}...</p>
+        `;
+      } else {
+        container.innerHTML = `<p>No readings available for today.</p>`;
+      }
+    }
+    renderReadings(currentLang);
+    // Language toggle buttons
+    const btnEn = document.getElementById('lang-en');
+    const btnSw = document.getElementById('lang-sw');
+    if (btnEn && btnSw) {
+      btnEn.onclick = () => {
+        currentLang = 'en';
+        localStorage.setItem('readingLang', 'en');
+        btnEn.setAttribute('aria-pressed', 'true');
+        btnSw.setAttribute('aria-pressed', 'false');
+        renderReadings('en');
+      };
+      btnSw.onclick = () => {
+        currentLang = 'sw';
+        localStorage.setItem('readingLang', 'sw');
+        btnEn.setAttribute('aria-pressed', 'false');
+        btnSw.setAttribute('aria-pressed', 'true');
+        renderReadings('sw');
+      };
     }
   } catch (err) {
     container.innerHTML = `<p>Unable to load daily readings.</p>`;

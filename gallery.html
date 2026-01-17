@@ -32,6 +32,18 @@
       <div class="gallery-simple-container">
         <h1 class="gallery-simple-title"> Parish Gallery</h1>
         <p class="gallery-simple-subtitle">A glimpse into parish life and community moments.</p>
+        <div style="margin-bottom:1rem;">
+          <label for="gallery-filter-event">Filter by Event:</label>
+          <select id="gallery-filter-event">
+            <option value="all">All Events</option>
+            <option value="easter">Easter</option>
+            <option value="baptism">Baptism</option>
+            <option value="choir">Choir</option>
+            <option value="youth">Youth</option>
+            <option value="confirmation">Confirmation</option>
+            <option value="video">Videos</option>
+          </select>
+        </div>
         <div id="gallery-grid" class="gallery-simple-grid" aria-live="polite"></div>
       </div>
     </main>
@@ -40,7 +52,7 @@
     <div id="gallery-modal" class="gallery-simple-modal" role="dialog" aria-modal="true" aria-label="Image viewer" tabindex="-1">
       <div class="gallery-simple-modal-content">
         <button class="gallery-simple-modal-close" aria-label="Close">&times;</button>
-        <img class="gallery-simple-modal-img" src="" alt="" />
+        <div id="gallery-modal-media"></div>
         <div class="gallery-simple-modal-caption"></div>
       </div>
     </div>

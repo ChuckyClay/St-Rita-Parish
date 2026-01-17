@@ -33,6 +33,10 @@
 
     <section class="daily-readings">
       <h2>Daily Readings</h2>
+      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+        <button id="lang-en" class="btn" aria-pressed="true">English</button>
+        <button id="lang-sw" class="btn" aria-pressed="false">Kiswahili</button>
+      </div>
       <div id="daily-readings-preview" class="card"></div>
       <a href="daily-readings.html" class="btn">Read Full Readings</a>
     </section>
@@ -69,7 +73,26 @@
     </section>
   </main>
 
-  <footer class="site-footer">&copy; 2025 St. Rita Parish <br> <i>Designed by DevTwins Developers</i></footer>
+  <footer class="site-footer">
+    &copy; 2025 St. Rita Parish <br> <i>Designed by DevTwins Developers</i><br>
+    <a href="#" id="privacy-link" style="color:#007bff;text-decoration:underline;">Privacy Policy & Terms</a>
+    <div id="privacy-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+      <div style="background:#fff;padding:2rem;max-width:500px;margin:auto;border-radius:10px;position:relative;">
+        <button id="close-privacy" style="position:absolute;top:10px;right:10px;">&times;</button>
+        <h2>Privacy Policy & Terms</h2>
+        <p>Your data (phone numbers, messages) is stored securely and used only for parish communication. We do not share your information with third parties. By submitting your phone number, you consent to receive SMS updates from St. Rita Parish. For questions, contact the parish office.</p>
+      </div>
+    </div>
+    <script>
+    document.getElementById('privacy-link').onclick = function(e) {
+      e.preventDefault();
+      document.getElementById('privacy-modal').style.display = 'flex';
+    };
+    document.getElementById('close-privacy').onclick = function() {
+      document.getElementById('privacy-modal').style.display = 'none';
+    };
+    </script>
+  </footer>
 
   <script src="app.js"></script>
 </body>
