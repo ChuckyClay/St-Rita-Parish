@@ -115,3 +115,4 @@ function defineGallery() {
     modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
     modal.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
   });
+}
