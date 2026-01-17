@@ -55,8 +55,9 @@ function defineGallery() {
         el.setAttribute('role', 'button');
         el.setAttribute('aria-label', item.caption);
         if (item.type === 'image') {
+          const altText = item.alt && item.alt.trim().length > 0 ? item.alt : item.caption || 'Gallery image';
           el.innerHTML = `
-            <img class="gallery-simple-img" src="${item.src}" alt="${item.alt}" loading="lazy" />
+            <img class="gallery-simple-img" src="${item.src}" alt="${altText}" loading="lazy" />
             <div class="gallery-simple-caption">${item.caption || ''}</div>
           `;
         } else if (item.type === 'video') {

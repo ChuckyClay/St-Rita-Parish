@@ -27,6 +27,7 @@
           <div style="margin-top:10px">
             <button type="submit">Save Announcement</button>
           </div>
+          <div id="ann-success" class="small muted" style="margin-top:10px"></div>
         </form>
       </section>
       <section class="card" style="margin-top:12px">
@@ -37,6 +38,7 @@
           <div style="margin-top:10px">
             <button type="submit">Send Message</button>
           </div>
+          <div id="mess-success" class="small muted" style="margin-top:10px"></div>
         </form>
         <div id="sms-status" class="small muted" style="margin-top:10px"></div>
       </section>
@@ -57,6 +59,7 @@
           <label for="media-date">Date:</label>
           <input id="media-date" type="date" />
           <button type="submit">Upload</button>
+          <div id="media-success" class="small muted" style="margin-top:10px"></div>
         </form>
         <div id="media-status" class="small muted" style="margin-top:10px"></div>
       </section>
@@ -89,12 +92,19 @@
     annForm.addEventListener('submit', e=>{
       e.preventDefault();
       const t = document.getElementById('ann-text').value.trim();
-      if(!t) return alert('Enter announcement');
+      const successDiv = document.getElementById('ann-success');
+      if(!t) {
+        successDiv.textContent = 'Enter announcement.';
+        successDiv.style.color = 'red';
+        return;
+      }
       const arr = JSON.parse(localStorage.getItem('announcements')||'[]');
       arr.unshift(t);
       localStorage.setItem('announcements', JSON.stringify(arr));
       document.getElementById('ann-text').value='';
-      alert('Saved announcement (local)');
+      successDiv.textContent = 'Saved announcement.';
+      successDiv.style.color = 'green';
+      setTimeout(() => { successDiv.textContent = ''; }, 4000);
     });
 
     // Message logic
@@ -103,12 +113,19 @@
     messForm.addEventListener('submit', async (e)=>{
       e.preventDefault();
       const message = document.getElementById('mess-text').value.trim();
-      if(!message) return alert('Enter a message to send');
+      const successDiv = document.getElementById('mess-success');
+      if(!message) {
+        successDiv.textContent = 'Enter a message to send.';
+        successDiv.style.color = 'red';
+        return;
+      }
       status.textContent = 'Attempting to send... (prototype)';
       try{
-        // Placeholder: POST to your backend API to send SMS
         await new Promise(r=>setTimeout(r,800));
         status.textContent = 'SMS send queued (placeholder). Integrate backend to actually send messages.';
+        successDiv.textContent = 'Message sent.';
+        successDiv.style.color = 'green';
+        setTimeout(() => { successDiv.textContent = ''; }, 4000);
       }catch(err){ status.textContent = 'SMS failed: '+err.message }
     });
 
@@ -121,15 +138,19 @@
       const caption = document.getElementById('media-caption').value.trim();
       const event = document.getElementById('media-event').value.trim();
       const date = document.getElementById('media-date').value;
+      const successDiv = document.getElementById('media-success');
       if (!src || !caption || !event || !date) {
-        document.getElementById('media-status').textContent = 'Please fill all fields.';
+        successDiv.textContent = 'Please fill all fields.';
+        successDiv.style.color = 'red';
         return;
       }
       let media = JSON.parse(localStorage.getItem('galleryMedia') || '[]');
       media.push({ type, src, caption, event, date });
       localStorage.setItem('galleryMedia', JSON.stringify(media));
-      document.getElementById('media-status').textContent = 'Media uploaded (local only).';
+      successDiv.textContent = 'Media uploaded.';
+      successDiv.style.color = 'green';
       mediaForm.reset();
+      setTimeout(() => { successDiv.textContent = ''; }, 4000);
     });
 
     // Show subscribed phone numbers
