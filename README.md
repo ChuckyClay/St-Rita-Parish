@@ -1,43 +1,30 @@
 # St. Rita Parish Website
 
-A responsive, frontend-only Catholic parish website built with HTML, CSS, and vanilla JavaScript.
+Production-ready Catholic parish website with:
 
-## Features
+- Modern responsive frontend (HTML, CSS, JS)
+- Node.js/Express backend with secure JWT admin authentication
+- Admin panel for announcements, events, media, messages, and phone management
+- Automated daily Catholic readings (external API)
+- Data stored in JSON files (no database required)
+- Security best practices: environment variables, input validation, rate limiting, helmet
 
-- **Home Page**: Welcome message, mass schedule, announcements preview, upcoming events preview
-- **About**: Parish history, patron saint, mission and vision
-- **Mass & Sacraments**: Mass timetable and sacraments overview
-- **Groups & Ministries**: Choirs, youth group, CMA/CWA/PMC, Catechism & SCCs
-- **Announcements & Events**: Full list of announcements and events
-- **Gallery**: Responsive image grid with modal preview
-- **Contact**: Contact details, frontend form, embedded Google Map
-- **Admin Panel**: For adding announcements and songs (stores in localStorage)
+## Quick Start
 
-## Technologies
-
-- HTML5 with semantic elements
-- CSS with Flexbox/Grid, mobile-first design
-- Vanilla JavaScript
-- JSON for data storage (frontend only)
+1. Install dependencies: `npm install` (in backend)
+2. Set up `.env` with secrets (see backend/.env.example)
+3. Start backend: `node backend/server.js`
+4. Start readings cron: `node backend/cron.js`
+5. Open `index.html` in your browser
 
 ## File Structure
 
-- `index.html` - Home page
-- `about.html` - About the parish
-- `mass-sacraments.html` - Mass and sacraments info
-- `groups-ministries.html` - Parish groups
-- `announcements-events.html` - Announcements and events
-- `gallery.html` - Photo gallery
-- `contact.html` - Contact information
-- `admin.html` - Admin panel
-- `styles.css` - Stylesheet
-- `app.js` - Main JavaScript
-- `announcements.json` - Announcements data
-- `events.json` - Events data
-- `gallery.json` - Gallery images
-- `readings.json` - Daily readings (legacy)
+- Frontend: `index.html`, `about.html`, `admin.html`, etc.
+- Backend: `backend/` (Express server, routes, data)
+- Data: `announcements.json`, `events.json`, `gallery.json`, `messages.json`, `phones.json`, `readings.json`
 
-## Design
+## License
+MIT
 
 - Church-appropriate colors: white, blue, green, gold
 - Clean, simple typography
