@@ -40,7 +40,8 @@ function defineGallery() {
     function getAllMedia() {
       let uploaded = [];
       try {
-        uploaded = JSON.parse(localStorage.getItem('galleryMedia') || '[]');
+        // uploaded = JSON.parse(localStorage.getItem('galleryMedia') || '[]');
+        // All media should now be managed via backend API.
       } catch {}
       return [...mediaItems, ...uploaded];
     }

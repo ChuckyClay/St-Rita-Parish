@@ -1,0 +1,26 @@
+# Node
+node_modules/
+.env
+*.env
+*.log
+package-lock.json
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data backups (optional, if you want to keep .json data local only)
+backend/*.json
+!backend/announcements.json
+!backend/events.json
+!backend/gallery.json
+!backend/messages.json
+!backend/phones.json
+!readings.json
+
+# Ignore test and temp files
+*.tmp
+*.bak

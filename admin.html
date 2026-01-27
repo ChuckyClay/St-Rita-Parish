@@ -7,7 +7,10 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="site-header"><div class="brand"><h1>Admin Panel</h1></div></header>
+  <header class="site-header">
+    <div class="brand"><h1>Admin Panel</h1></div>
+    <button id="logout-btn" style="display:none;position:absolute;top:20px;right:20px;">Logout</button>
+  </header>
   <main class="container">
     <section id="auth-section" class="card">
       <h3>Admin Login</h3>
@@ -31,6 +34,28 @@
         </form>
       </section>
       <section class="card" style="margin-top:12px">
+        <h3>Add Event</h3>
+        <form id="event-form">
+          <label for="event-title" class="small muted">Title</label><br>
+          <input id="event-title" placeholder="Event title" />
+          <label for="event-date" class="small muted">Date</label><br>
+          <input id="event-date" type="date" />
+          <label for="event-time" class="small muted">Time</label><br>
+          <input id="event-time" type="time" />
+          <label for="event-desc" class="small muted">Description</label><br>
+          <textarea id="event-desc" placeholder="Event description" rows="2"></textarea>
+          <div style="margin-top:10px">
+            <button type="submit">Save Event</button>
+          </div>
+          <div id="event-success" class="small muted" style="margin-top:10px"></div>
+        </form>
+      </section>
+      <section class="card" style="margin-top:12px">
+        <h3>Delete Event</h3>
+        <ul id="event-list" class="small muted"></ul>
+        <div id="event-delete-success" class="small muted" style="margin-top:10px"></div>
+      </section>
+      <section class="card" style="margin-top:12px">
         <h3>Send Message</h3>
         <form id="mess-form">
           <label for="mess-text" class="small muted">Message</label><br>
@@ -42,6 +67,101 @@
         </form>
         <div id="sms-status" class="small muted" style="margin-top:10px"></div>
       </section>
+    // Event logic (backend)
+    const eventForm = document.getElementById('event-form');
+    const eventList = document.getElementById('event-list');
+    const eventDeleteSuccess = document.getElementById('event-delete-success');
+    async function loadEventsForDelete() {
+      if (!eventList) return;
+      eventList.innerHTML = '<li>Loading...</li>';
+      try {
+        const res = await fetch('http://localhost:3000/api/events');
+        if (!res.ok) throw new Error('Failed to load events');
+        const events = await res.json();
+        if (!Array.isArray(events) || events.length === 0) {
+          eventList.innerHTML = '<li>No events found.</li>';
+          return;
+        }
+        eventList.innerHTML = events.map(ev =>
+          `<li>${ev.title} (${ev.date} ${ev.time}) <button data-id="${ev.id}" class="delete-event-btn">Delete</button></li>`
+        ).join('');
+      } catch (err) {
+        eventList.innerHTML = `<li>${err.message}</li>`;
+      }
+    }
+    if (eventList) {
+      eventList.addEventListener('click', async e => {
+        if (e.target.classList.contains('delete-event-btn')) {
+          const id = e.target.getAttribute('data-id');
+          if (!id) return;
+          if (!confirm('Delete this event?')) return;
+          try {
+            const res = await fetch(`http://localhost:3000/api/events/${id}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': 'Bearer ' + jwtToken }
+            });
+            if (!res.ok) {
+              if (res.status === 401) {
+                showLogin();
+                throw new Error('Session expired. Please log in again.');
+              }
+              const data = await res.json();
+              throw new Error(data.error || 'Failed to delete event');
+            }
+            eventDeleteSuccess.textContent = 'Event deleted.';
+            eventDeleteSuccess.style.color = 'green';
+            setTimeout(() => { eventDeleteSuccess.textContent = ''; }, 3000);
+            loadEventsForDelete();
+          } catch (err) {
+            eventDeleteSuccess.textContent = err.message;
+            eventDeleteSuccess.style.color = 'red';
+          }
+        }
+      });
+    }
+    if (eventForm) {
+      eventForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const title = document.getElementById('event-title').value.trim();
+        const date = document.getElementById('event-date').value;
+        const time = document.getElementById('event-time').value;
+        const description = document.getElementById('event-desc').value.trim();
+        const successDiv = document.getElementById('event-success');
+        if (!title || !date || !time || !description) {
+          successDiv.textContent = 'Please fill all fields.';
+          successDiv.style.color = 'red';
+          return;
+        }
+        try {
+          const res = await fetch('http://localhost:3000/api/events', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + jwtToken
+            },
+            body: JSON.stringify({ title, date, time, description })
+          });
+          if (!res.ok) {
+            if (res.status === 401) {
+              showLogin();
+              throw new Error('Session expired. Please log in again.');
+            }
+            const data = await res.json();
+            throw new Error(data.error || 'Failed to save event');
+          }
+          eventForm.reset();
+          successDiv.textContent = 'Saved event.';
+          successDiv.style.color = 'green';
+          setTimeout(() => { successDiv.textContent = ''; }, 4000);
+          loadEventsForDelete();
+        } catch (err) {
+          successDiv.textContent = err.message;
+          successDiv.style.color = 'red';
+        }
+      });
+      // Load events for deletion on page load
+      loadEventsForDelete();
+    }
       <section class="card" style="margin-top:12px">
         <h3>Upload Media</h3>
         <form id="media-form">
@@ -72,92 +192,209 @@
     <footer class="site-footer">&copy; St. Rita Parish <br> <i>Designed by DevTwins Developers</i></footer>
 
   <script>
-    // Simple password authentication
-    const adminPassword = 'stRita2026'; // Change this to a secure password
+    // Backend JWT authentication
     const authSection = document.getElementById('auth-section');
     const adminContent = document.getElementById('admin-content');
-    document.getElementById('admin-login-form').addEventListener('submit', function(e) {
+    let jwtToken = localStorage.getItem('jwtToken') || '';
+
+    function showAdminContent() {
+      authSection.style.display = 'none';
+      adminContent.style.display = '';
+    }
+    function showLogin() {
+      authSection.style.display = '';
+      adminContent.style.display = 'none';
+    }
+    const logoutBtn = document.getElementById('logout-btn');
+    function updateLogoutBtn() {
+      if (jwtToken) {
+        logoutBtn.style.display = '';
+      } else {
+        logoutBtn.style.display = 'none';
+      }
+    }
+    if (jwtToken) {
+      showAdminContent();
+      updateLogoutBtn();
+    }
+    logoutBtn.addEventListener('click', function() {
+      jwtToken = '';
+      localStorage.removeItem('jwtToken');
+      showLogin();
+      updateLogoutBtn();
+    });
+
+    document.getElementById('admin-login-form').addEventListener('submit', async function(e) {
       e.preventDefault();
       const pw = document.getElementById('admin-password').value;
-      if (pw === adminPassword) {
-        authSection.style.display = 'none';
-        adminContent.style.display = '';
-      } else {
-        document.getElementById('auth-error').textContent = 'Incorrect password.';
+      document.getElementById('auth-error').textContent = '';
+      try {
+        const res = await fetch('http://localhost:3000/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pw })
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Login failed');
+        }
+        const data = await res.json();
+        jwtToken = data.token;
+        localStorage.setItem('jwtToken', jwtToken);
+        showAdminContent();
+        updateLogoutBtn();
+      } catch (err) {
+        document.getElementById('auth-error').textContent = err.message;
       }
     });
 
-    // Announcement logic
+    // Announcement logic (backend)
     const annForm = document.getElementById('ann-form');
-    annForm.addEventListener('submit', e=>{
+    annForm.addEventListener('submit', async e => {
       e.preventDefault();
       const t = document.getElementById('ann-text').value.trim();
       const successDiv = document.getElementById('ann-success');
-      if(!t) {
+      if (!t) {
         successDiv.textContent = 'Enter announcement.';
         successDiv.style.color = 'red';
         return;
       }
-      const arr = JSON.parse(localStorage.getItem('announcements')||'[]');
-      arr.unshift(t);
-      localStorage.setItem('announcements', JSON.stringify(arr));
-      document.getElementById('ann-text').value='';
-      successDiv.textContent = 'Saved announcement.';
-      successDiv.style.color = 'green';
-      setTimeout(() => { successDiv.textContent = ''; }, 4000);
-    });
-
-    // Message logic
-    const messForm = document.getElementById('mess-form');
-    const status = document.getElementById('sms-status');
-    messForm.addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      const message = document.getElementById('mess-text').value.trim();
-      const successDiv = document.getElementById('mess-success');
-      if(!message) {
-        successDiv.textContent = 'Enter a message to send.';
-        successDiv.style.color = 'red';
-        return;
-      }
-      status.textContent = 'Attempting to send... (prototype)';
-      try{
-        await new Promise(r=>setTimeout(r,800));
-        status.textContent = 'SMS send queued (placeholder). Integrate backend to actually send messages.';
-        successDiv.textContent = 'Message sent.';
+      try {
+        const res = await fetch('http://localhost:3000/api/announcements', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + jwtToken
+          },
+          body: JSON.stringify({ title: 'Announcement', content: t, date: new Date().toISOString() })
+        });
+        if (!res.ok) {
+          if (res.status === 401) {
+            showLogin();
+            throw new Error('Session expired. Please log in again.');
+          }
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to save announcement');
+        }
+        document.getElementById('ann-text').value = '';
+        successDiv.textContent = 'Saved announcement.';
         successDiv.style.color = 'green';
         setTimeout(() => { successDiv.textContent = ''; }, 4000);
-      }catch(err){ status.textContent = 'SMS failed: '+err.message }
-    });
-
-    // Media upload logic
-    const mediaForm = document.getElementById('media-form');
-    mediaForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const type = document.getElementById('media-type').value;
-      const src = document.getElementById('media-src').value.trim();
-      const caption = document.getElementById('media-caption').value.trim();
-      const event = document.getElementById('media-event').value.trim();
-      const date = document.getElementById('media-date').value;
-      const successDiv = document.getElementById('media-success');
-      if (!src || !caption || !event || !date) {
-        successDiv.textContent = 'Please fill all fields.';
+      } catch (err) {
+        successDiv.textContent = err.message;
         successDiv.style.color = 'red';
-        return;
       }
-      let media = JSON.parse(localStorage.getItem('galleryMedia') || '[]');
-      media.push({ type, src, caption, event, date });
-      localStorage.setItem('galleryMedia', JSON.stringify(media));
-      successDiv.textContent = 'Media uploaded.';
-      successDiv.style.color = 'green';
-      mediaForm.reset();
-      setTimeout(() => { successDiv.textContent = ''; }, 4000);
     });
 
-    // Show subscribed phone numbers
-    function renderPhoneList() {
+    // Message logic (backend)
+    const messForm = document.getElementById('mess-form');
+    const status = document.getElementById('sms-status');
+    if (messForm) {
+      messForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const message = document.getElementById('mess-text').value.trim();
+        const successDiv = document.getElementById('mess-success');
+        if (!message) {
+          successDiv.textContent = 'Enter a message to send.';
+          successDiv.style.color = 'red';
+          return;
+        }
+        status.textContent = 'Attempting to send...';
+        try {
+          const res = await fetch('http://localhost:3000/api/messages', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + jwtToken
+            },
+            body: JSON.stringify({ message })
+          });
+          if (!res.ok) {
+            if (res.status === 401) {
+              showLogin();
+              throw new Error('Session expired. Please log in again.');
+            }
+            const data = await res.json();
+            throw new Error(data.error || 'Failed to send message');
+          }
+          status.textContent = 'Message sent to subscribers.';
+          successDiv.textContent = 'Message sent.';
+          successDiv.style.color = 'green';
+          setTimeout(() => { successDiv.textContent = ''; }, 4000);
+        } catch (err) {
+          status.textContent = 'SMS failed: ' + err.message;
+          successDiv.textContent = err.message;
+          successDiv.style.color = 'red';
+        }
+      });
+    }
+
+    // Media upload logic (backend)
+    const mediaForm = document.getElementById('media-form');
+    if (mediaForm) {
+      mediaForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const type = document.getElementById('media-type').value;
+        const src = document.getElementById('media-src').value.trim();
+        const caption = document.getElementById('media-caption').value.trim();
+        const event = document.getElementById('media-event').value.trim();
+        const date = document.getElementById('media-date').value;
+        const successDiv = document.getElementById('media-success');
+        if (!src || !caption || !event || !date) {
+          successDiv.textContent = 'Please fill all fields.';
+          successDiv.style.color = 'red';
+          return;
+        }
+        try {
+          const res = await fetch('http://localhost:3000/api/media', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + jwtToken
+            },
+            body: JSON.stringify({ type, src, caption, event, date })
+          });
+          if (!res.ok) {
+            if (res.status === 401) {
+              showLogin();
+              throw new Error('Session expired. Please log in again.');
+            }
+            const data = await res.json();
+            throw new Error(data.error || 'Failed to upload media');
+          }
+          successDiv.textContent = 'Media uploaded.';
+          successDiv.style.color = 'green';
+          mediaForm.reset();
+          setTimeout(() => { successDiv.textContent = ''; }, 4000);
+        } catch (err) {
+          successDiv.textContent = err.message;
+          successDiv.style.color = 'red';
+        }
+      });
+    }
+
+    // Show subscribed phone numbers (backend)
+    async function renderPhoneList() {
       const phoneList = document.getElementById('phone-list');
-      let phones = JSON.parse(localStorage.getItem('smsPhones') || '[]');
-      phoneList.innerHTML = phones.length ? phones.map(p => `<li>${p}</li>`).join('') : '<li>No numbers subscribed.</li>';
+      phoneList.innerHTML = '<li>Loading...</li>';
+      try {
+        const res = await fetch('http://localhost:3000/api/phones', {
+          headers: { 'Authorization': 'Bearer ' + jwtToken }
+        });
+        if (!res.ok) {
+          if (res.status === 401) {
+            showLogin();
+            throw new Error('Session expired. Please log in again.');
+          }
+          throw new Error('Failed to load phone numbers');
+        }
+        const phones = await res.json();
+        phoneList.innerHTML = Array.isArray(phones) && phones.length
+          ? phones.map(p => `<li>${p}</li>`).join('')
+          : '<li>No numbers subscribed.</li>';
+      } catch (err) {
+        phoneList.innerHTML = `<li>${err.message}</li>`;
+      }
     }
     renderPhoneList();
   </script>
