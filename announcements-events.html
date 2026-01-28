@@ -43,7 +43,7 @@
     async function loadAnnouncementsFull() {
       const container = document.getElementById('announcements-full');
       try {
-        const res = await fetch('announcements.json');
+        const res = await fetch('http://localhost:3000/api/announcements');
         const announcements = await res.json();
         container.innerHTML = announcements.map(ann => `
           <div class="card">
@@ -61,7 +61,7 @@
     async function loadEventsFull() {
       const container = document.getElementById('events-full');
       try {
-        const res = await fetch('events.json');
+        const res = await fetch('http://localhost:3000/api/events');
         const events = await res.json();
         container.innerHTML = events.map(event => `
           <div class="card event-card">

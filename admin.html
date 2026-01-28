@@ -11,62 +11,141 @@
     <div class="brand"><h1>Admin Panel</h1></div>
     <button id="logout-btn" style="display:none;position:absolute;top:20px;right:20px;">Logout</button>
   </header>
-  <main class="container">
-    <section id="auth-section" class="card">
-      <h3>Admin Login</h3>
-      <form id="admin-login-form">
+  <main class="container admin-panel">
+    <section id="auth-section" class="card admin-card">
+      <h2 class="admin-title">Admin Login</h2>
+      <form id="admin-login-form" class="admin-form">
+        <input type="hidden" id="admin-username" value="admin" />
         <label for="admin-password">Password:</label>
         <input type="password" id="admin-password" required />
-        <button type="submit">Login</button>
+        <button type="submit" class="admin-btn">Login</button>
       </form>
       <div id="auth-error" class="small muted" style="color:red;margin-top:10px;"></div>
     </section>
     <section id="admin-content" style="display:none;">
-      <section class="card">
-        <h3>Add Announcement</h3>
-        <form id="ann-form">
-          <label for="ann-text" class="small muted">Text</label><br>
-          <input id="ann-text" placeholder="Announcement text" />
-          <div style="margin-top:10px">
-            <button type="submit">Save Announcement</button>
-          </div>
-          <div id="ann-success" class="small muted" style="margin-top:10px"></div>
-        </form>
-      </section>
-      <section class="card" style="margin-top:12px">
-        <h3>Add Event</h3>
-        <form id="event-form">
-          <label for="event-title" class="small muted">Title</label><br>
-          <input id="event-title" placeholder="Event title" />
-          <label for="event-date" class="small muted">Date</label><br>
-          <input id="event-date" type="date" />
-          <label for="event-time" class="small muted">Time</label><br>
-          <input id="event-time" type="time" />
-          <label for="event-desc" class="small muted">Description</label><br>
-          <textarea id="event-desc" placeholder="Event description" rows="2"></textarea>
-          <div style="margin-top:10px">
-            <button type="submit">Save Event</button>
-          </div>
-          <div id="event-success" class="small muted" style="margin-top:10px"></div>
-        </form>
-      </section>
-      <section class="card" style="margin-top:12px">
-        <h3>Delete Event</h3>
-        <ul id="event-list" class="small muted"></ul>
-        <div id="event-delete-success" class="small muted" style="margin-top:10px"></div>
-      </section>
-      <section class="card" style="margin-top:12px">
-        <h3>Send Message</h3>
-        <form id="mess-form">
-          <label for="mess-text" class="small muted">Message</label><br>
-          <textarea id="mess-text" placeholder="Message text" rows="3"></textarea>
-          <div style="margin-top:10px">
-            <button type="submit">Send Message</button>
-          </div>
-          <div id="mess-success" class="small muted" style="margin-top:10px"></div>
-        </form>
-        <div id="sms-status" class="small muted" style="margin-top:10px"></div>
-      </section>
+      <div class="admin-sections">
+        <section class="card admin-card">
+          <h2 class="admin-title">Announcements</h2>
+          <form id="ann-form" class="admin-form">
+            <label for="ann-text">Text</label>
+            <input id="ann-text" placeholder="Announcement text" />
+            <button type="submit" class="admin-btn">Save Announcement</button>
+            <div id="ann-success" class="small muted" style="margin-top:10px"></div>
+          </form>
+        </section>
+        <section class="card admin-card">
+          <h2 class="admin-title">Events</h2>
+          <form id="event-form" class="admin-form">
+            <label for="event-title">Title</label>
+            <input id="event-title" placeholder="Event title" />
+            <label for="event-date">Date</label>
+            <input id="event-date" type="date" />
+            <label for="event-time">Time</label>
+            <input id="event-time" type="time" />
+            <label for="event-desc">Description</label>
+            <textarea id="event-desc" placeholder="Event description" rows="2"></textarea>
+            <button type="submit" class="admin-btn">Save Event</button>
+            <div id="event-success" class="small muted" style="margin-top:10px"></div>
+          </form>
+          <div class="admin-divider"></div>
+          <h3>Delete Event</h3>
+          <ul id="event-list" class="small muted"></ul>
+          <div id="event-delete-success" class="small muted" style="margin-top:10px"></div>
+        </section>
+        <section class="card admin-card">
+          <h2 class="admin-title">Send Message</h2>
+          <form id="mess-form" class="admin-form">
+            <label for="mess-text">Message</label>
+            <textarea id="mess-text" placeholder="Message text" rows="3"></textarea>
+            <button type="submit" class="admin-btn">Send Message</button>
+            <div id="mess-success" class="small muted" style="margin-top:10px"></div>
+          </form>
+          <div id="sms-status" class="small muted" style="margin-top:10px"></div>
+        </section>
+        <section class="card admin-card">
+          <h2 class="admin-title">Upload Media</h2>
+          <form id="media-form" class="admin-form" enctype="multipart/form-data">
+            <label for="media-files">Select Images or Videos</label>
+            <input id="media-files" name="mediaFiles" type="file" accept="image/*,video/*" multiple required />
+            <label for="media-caption">Caption (optional, applies to all)</label>
+            <input id="media-caption" placeholder="Caption" />
+            <label for="media-event">Event (optional, applies to all)</label>
+            <input id="media-event" placeholder="e.g. easter" />
+            <label for="media-date">Date (optional, applies to all)</label>
+            <input id="media-date" type="date" />
+            <button type="submit" class="admin-btn">Upload</button>
+            <div id="media-success" class="small muted" style="margin-top:10px"></div>
+          </form>
+          <div id="media-status" class="small muted" style="margin-top:10px"></div>
+        </section>
+        <section class="card admin-card">
+          <h2 class="admin-title">Subscribed Phone Numbers</h2>
+          <ul id="phone-list" class="small muted"></ul>
+        </section>
+      </div>
+    </section>
+  </main>
+    <footer class="site-footer">&copy; St. Rita Parish <br> <i>Designed by DevTwins Developers</i></footer>
+
+  <script>
+    // All admin panel JavaScript moved here
+    // Backend JWT authentication
+    const authSection = document.getElementById('auth-section');
+    const adminContent = document.getElementById('admin-content');
+    let jwtToken = localStorage.getItem('jwtToken') || '';
+
+    function showAdminContent() {
+      authSection.style.display = 'none';
+      adminContent.style.display = '';
+    }
+    function showLogin() {
+      authSection.style.display = '';
+      adminContent.style.display = 'none';
+    }
+    const logoutBtn = document.getElementById('logout-btn');
+    function updateLogoutBtn() {
+      if (jwtToken) {
+        logoutBtn.style.display = '';
+      } else {
+        logoutBtn.style.display = 'none';
+      }
+    }
+    if (jwtToken) {
+      showAdminContent();
+      updateLogoutBtn();
+    }
+    logoutBtn.addEventListener('click', function() {
+      jwtToken = '';
+      localStorage.removeItem('jwtToken');
+      showLogin();
+      updateLogoutBtn();
+    });
+
+    document.getElementById('admin-login-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const pw = document.getElementById('admin-password').value;
+      const username = document.getElementById('admin-username').value;
+      document.getElementById('auth-error').textContent = '';
+      try {
+        const res = await fetch('http://localhost:3000/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password: pw })
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Login failed');
+        }
+        const data = await res.json();
+        jwtToken = data.token;
+        localStorage.setItem('jwtToken', jwtToken);
+        showAdminContent();
+        updateLogoutBtn();
+      } catch (err) {
+        document.getElementById('auth-error').textContent = err.message;
+      }
+    });
+
     // Event logic (backend)
     const eventForm = document.getElementById('event-form');
     const eventList = document.getElementById('event-list');
@@ -162,91 +241,6 @@
       // Load events for deletion on page load
       loadEventsForDelete();
     }
-      <section class="card" style="margin-top:12px">
-        <h3>Upload Media</h3>
-        <form id="media-form">
-          <label for="media-type">Type:</label>
-          <select id="media-type">
-            <option value="image">Image</option>
-            <option value="video">Video</option>
-          </select>
-          <label for="media-src">Source (URL or file name):</label>
-          <input id="media-src" placeholder="e.g. easter.jpg or https://..." />
-          <label for="media-caption">Caption:</label>
-          <input id="media-caption" placeholder="Caption" />
-          <label for="media-event">Event:</label>
-          <input id="media-event" placeholder="e.g. easter" />
-          <label for="media-date">Date:</label>
-          <input id="media-date" type="date" />
-          <button type="submit">Upload</button>
-          <div id="media-success" class="small muted" style="margin-top:10px"></div>
-        </form>
-        <div id="media-status" class="small muted" style="margin-top:10px"></div>
-      </section>
-      <section class="card" style="margin-top:12px">
-        <h3>Subscribed Phone Numbers</h3>
-        <ul id="phone-list" class="small muted"></ul>
-      </section>
-    </section>
-  </main>
-    <footer class="site-footer">&copy; St. Rita Parish <br> <i>Designed by DevTwins Developers</i></footer>
-
-  <script>
-    // Backend JWT authentication
-    const authSection = document.getElementById('auth-section');
-    const adminContent = document.getElementById('admin-content');
-    let jwtToken = localStorage.getItem('jwtToken') || '';
-
-    function showAdminContent() {
-      authSection.style.display = 'none';
-      adminContent.style.display = '';
-    }
-    function showLogin() {
-      authSection.style.display = '';
-      adminContent.style.display = 'none';
-    }
-    const logoutBtn = document.getElementById('logout-btn');
-    function updateLogoutBtn() {
-      if (jwtToken) {
-        logoutBtn.style.display = '';
-      } else {
-        logoutBtn.style.display = 'none';
-      }
-    }
-    if (jwtToken) {
-      showAdminContent();
-      updateLogoutBtn();
-    }
-    logoutBtn.addEventListener('click', function() {
-      jwtToken = '';
-      localStorage.removeItem('jwtToken');
-      showLogin();
-      updateLogoutBtn();
-    });
-
-    document.getElementById('admin-login-form').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const pw = document.getElementById('admin-password').value;
-      document.getElementById('auth-error').textContent = '';
-      try {
-        const res = await fetch('http://localhost:3000/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: pw })
-        });
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || 'Login failed');
-        }
-        const data = await res.json();
-        jwtToken = data.token;
-        localStorage.setItem('jwtToken', jwtToken);
-        showAdminContent();
-        updateLogoutBtn();
-      } catch (err) {
-        document.getElementById('auth-error').textContent = err.message;
-      }
-    });
 
     // Announcement logic (backend)
     const annForm = document.getElementById('ann-form');
@@ -334,41 +328,80 @@
     if (mediaForm) {
       mediaForm.addEventListener('submit', async e => {
         e.preventDefault();
-        const type = document.getElementById('media-type').value;
-        const src = document.getElementById('media-src').value.trim();
+        const files = document.getElementById('media-files').files;
         const caption = document.getElementById('media-caption').value.trim();
         const event = document.getElementById('media-event').value.trim();
         const date = document.getElementById('media-date').value;
         const successDiv = document.getElementById('media-success');
-        if (!src || !caption || !event || !date) {
-          successDiv.textContent = 'Please fill all fields.';
+        if (!files.length) {
+          successDiv.textContent = 'Please select at least one file.';
           successDiv.style.color = 'red';
           return;
         }
+        // 1. Upload files to /api/media/upload
+        const formData = new FormData();
+        for (let i = 0; i < files.length; i++) {
+          formData.append('mediaFiles', files[i]);
+        }
+        let uploadedFiles;
         try {
-          const res = await fetch('http://localhost:3000/api/media', {
+          const uploadRes = await fetch('http://localhost:3000/api/media/upload', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
               'Authorization': 'Bearer ' + jwtToken
             },
-            body: JSON.stringify({ type, src, caption, event, date })
+            body: formData
           });
-          if (!res.ok) {
-            if (res.status === 401) {
+          if (!uploadRes.ok) {
+            if (uploadRes.status === 401) {
               showLogin();
               throw new Error('Session expired. Please log in again.');
             }
-            const data = await res.json();
-            throw new Error(data.error || 'Failed to upload media');
+            const data = await uploadRes.json();
+            throw new Error(data.error || 'Failed to upload files');
           }
+          const data = await uploadRes.json();
+          uploadedFiles = data.files;
+        } catch (err) {
+          successDiv.textContent = err.message;
+          successDiv.style.color = 'red';
+          return;
+        }
+        // 2. Save metadata for each file to /api/media
+        let allSuccess = true;
+        for (const file of uploadedFiles) {
+          const type = file.mimetype.startsWith('image') ? 'image' : 'video';
+          const meta = {
+            type,
+            src: file.path,
+            caption: caption || file.originalname,
+            event: event || '',
+            date: date || new Date().toISOString().split('T')[0]
+          };
+          try {
+            const res = await fetch('http://localhost:3000/api/media', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + jwtToken
+              },
+              body: JSON.stringify(meta)
+            });
+            if (!res.ok) {
+              allSuccess = false;
+            }
+          } catch {
+            allSuccess = false;
+          }
+        }
+        if (allSuccess) {
           successDiv.textContent = 'Media uploaded.';
           successDiv.style.color = 'green';
           mediaForm.reset();
           setTimeout(() => { successDiv.textContent = ''; }, 4000);
-        } catch (err) {
-          successDiv.textContent = err.message;
-          successDiv.style.color = 'red';
+        } else {
+          successDiv.textContent = 'Some files failed to save metadata.';
+          successDiv.style.color = 'orange';
         }
       });
     }

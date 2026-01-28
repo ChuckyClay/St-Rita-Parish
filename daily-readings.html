@@ -40,26 +40,36 @@
       const container = document.getElementById('daily-readings-full');
       const sourceLink = document.getElementById('source-link');
       try {
-        const res = await fetch('readings.json');
+        const res = await fetch('http://localhost:3000/api/readings');
         const data = await res.json();
         const today = new Date().toISOString().split('T')[0];
+        // Support both old and new (multi-language) formats
+        let firstReading = data.firstReading;
+        let psalm = data.psalm;
+        let gospel = data.gospel;
+        // If multi-language, default to English
+        if (firstReading.en && psalm.en && gospel.en) {
+          firstReading = firstReading.en;
+          psalm = psalm.en;
+          gospel = gospel.en;
+        }
         if (data.date === today) {
           container.innerHTML = `
             <p class="meta">${new Date(data.date).toLocaleDateString()}</p>
             <div class="card">
               <h3>First Reading</h3>
-              <h4>${data.firstReading.title}</h4>
-              <p>${data.firstReading.text}</p>
+              <h4>${firstReading.title}</h4>
+              <p>${firstReading.text}</p>
             </div>
             <div class="card">
               <h3>Responsorial Psalm</h3>
-              <h4>${data.psalm.title}</h4>
-              <p style="white-space: pre-line;">${data.psalm.text}</p>
+              <h4>${psalm.title}</h4>
+              <p style="white-space: pre-line;">${psalm.text}</p>
             </div>
             <div class="card">
               <h3>Gospel</h3>
-              <h4>${data.gospel.title}</h4>
-              <p>${data.gospel.text}</p>
+              <h4>${gospel.title}</h4>
+              <p>${gospel.text}</p>
             </div>
           `;
           sourceLink.href = data.source;
