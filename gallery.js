@@ -20,9 +20,17 @@ function defineGallery() {
 
   // Simple, clean, accessible gallery
   document.addEventListener('DOMContentLoaded', function() {
-    // Fetch media from backend and render gallery
-    let allMedia = [];
-    let filteredItems = [];
+    // Placeholder images and captions (replace with your own if desired)
+    const mediaItems = [
+      { type: 'image', src: 'easter.jpg', alt: 'Easter Mass', caption: 'Easter Sunday Mass celebration', event: 'easter', date: '2025-04-20' },
+      { type: 'image', src: 'baptism.jpg', alt: 'Baptism', caption: 'Baptism of new parishioners', event: 'baptism', date: '2025-05-10' },
+      { type: 'image', src: 'choir.jpg', alt: 'Parish Choir', caption: 'Parish choir performing during Mass', event: 'choir', date: '2025-06-15' },
+      { type: 'image', src: 'christi.jpg', alt: 'Corpus Christi', caption: 'Corpus Christi procession', event: 'easter', date: '2025-06-08' },
+      { type: 'image', src: 'youth.jpg', alt: 'Youth Group', caption: 'Youth group gathering', event: 'youth', date: '2025-07-12' },
+      { type: 'image', src: 'confirmation.jpg', alt: 'Confirmation', caption: 'Confirmation Mass with Bishop', event: 'confirmation', date: '2025-08-03' },
+      { type: 'video', src: 'https://www.youtube.com/embed/VIDEO_ID', alt: 'Parish Event Video', caption: 'Video: Parish Event Highlights', event: 'video', date: '2025-09-01' }
+    ];
+
     const grid = document.getElementById('gallery-grid');
     const modal = document.getElementById('gallery-modal');
     const modalCaption = modal.querySelector('.gallery-simple-modal-caption');
