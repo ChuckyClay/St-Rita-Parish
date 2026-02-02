@@ -2,29 +2,18 @@
 // Handles media uploads (image/video metadata)
 
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
+const db = require('./db');
 const { body, validationResult } = require('express-validator');
 const router = express.Router();
 
-const MEDIA_FILE = path.join(__dirname, '../gallery.json');
-
-function readMedia() {
-  try {
-    const data = fs.readFileSync(MEDIA_FILE, 'utf-8');
-    return JSON.parse(data);
-  } catch {
-    return [];
-  }
-}
-
-function writeMedia(data) {
-  fs.writeFileSync(MEDIA_FILE, JSON.stringify(data, null, 2));
-}
+// All data is now stored in SQLite
 
 // Get all media
 router.get('/', (req, res) => {
-  res.json(readMedia());
+  db.all('SELECT * FROM media ORDER BY date DESC', [], (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Database error.' });
+    res.json(rows);
+  });
 });
 
 // Add new media (image/video metadata)
@@ -43,25 +32,30 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
     const { type, src, caption, event, date } = req.body;
-    const media = readMedia();
-    const newMedia = { id: Date.now(), type, src, caption, event, date };
-    media.push(newMedia);
-    writeMedia(media);
-    res.status(201).json(newMedia);
+    db.run(
+      'INSERT INTO media (type, src, caption, event, date) VALUES (?, ?, ?, ?, ?)',
+      [type, src, caption, event, date],
+      function (err) {
+        if (err) return res.status(500).json({ error: 'Database error.' });
+        db.get('SELECT * FROM media WHERE id = ?', [this.lastID], (err, row) => {
+          if (err) return res.status(500).json({ error: 'Database error.' });
+          res.status(201).json(row);
+        });
+      }
+    );
   }
 );
 
 // Delete media by id
 router.delete('/:id', (req, res) => {
   const id = parseInt(req.params.id);
-  let media = readMedia();
-  const initialLen = media.length;
-  media = media.filter(m => m.id !== id);
-  if (media.length === initialLen) {
-    return res.status(404).json({ error: 'Media not found.' });
-  }
-  writeMedia(media);
-  res.json({ success: true });
+  db.run('DELETE FROM media WHERE id = ?', [id], function (err) {
+    if (err) return res.status(500).json({ error: 'Database error.' });
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Media not found.' });
+    }
+    res.json({ success: true });
+  });
 });
 
 module.exports = router;

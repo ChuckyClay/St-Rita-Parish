@@ -1,7 +1,15 @@
-
 // Simple Express server for St. Rita Parish backend
 const express = require('express');
 const app = express();
+// CORS and JSON middleware must be first
+app.use(express.json());
+app.use(require('cors')({
+  origin: [
+    'http://localhost:3000',
+    'http://127.0.0.1:5500'
+  ],
+  credentials: true
+}));
 const cors = require('cors');
 require('dotenv').config();
 const helmet = require('helmet');
@@ -13,11 +21,25 @@ const mediaRouter = require('./media');
 const announcementsRouter = require('./announcements');
 const eventsRouter = require('./events');
 const mediaUploadRouter = require('./media-upload');
+
+
 const PORT = process.env.PORT || 3001;
 
-app.use('/api/media/upload', mediaUploadRouter);
+// CORS and JSON middleware must come first
+app.use(express.json());
+app.use(cors({
+  origin: [
+    'http://localhost:3000', // frontend dev
+    'http://127.0.0.1:5500', // local static server (e.g. Live Server)
+    // 'https://your-production-domain.com' // production
+  ],
+  credentials: true
+}));
 
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+}));
+// Handle preflight OPTIONS requests for all routes
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
@@ -40,14 +62,18 @@ app.use('/api/messages', (req, res, next) => {
   next();
 }, messagesRouter);
 // Media API
+
 app.use('/api/media', (req, res, next) => {
   if ((req.method === 'POST' || req.method === 'DELETE')) {
     return requireAuth(req, res, next);
   }
   next();
 }, mediaRouter);
-app.use(express.json());
-app.use(cors());
+
+
+
+// Register media upload route after CORS and express.json
+app.use('/api/media/upload', mediaUploadRouter);
 
 // Auth API
 app.use('/api/auth', authRouter);
@@ -72,6 +98,9 @@ app.use('/api/events', (req, res, next) => {
 // Daily Readings API
 const readingsRouter = require('./readings');
 app.use('/api/readings', readingsRouter);
+
+// Place this after all app.use middleware, before any API routes
+app.get('/api/test', (req, res) => res.json({ ok: true }));
 
 app.get('/', (req, res) => {
   res.send('St. Rita Parish backend is running!');
