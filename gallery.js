@@ -97,8 +97,7 @@ function defineGallery() {
     }
 
     // Filtering
-          if (e.key === 'ArrowLeft') { if (modalIndex > 0) { openModal(modalIndex - 1); } }
-          if (e.key === 'ArrowRight') { if (modalIndex < filteredItems.length - 1) { openModal(modalIndex + 1); } }
+    // (Removed misplaced keydown event code that caused ReferenceError)
     const filterSelect = document.getElementById('gallery-filter-event');
     if (filterSelect) {
       filterSelect.addEventListener('change', () => {

@@ -1,6 +1,18 @@
 {
+  "name": "st-rita-parish-site",
+  "version": "1.0.0",
+  "description": "St. Rita Parish website frontend build tools",
+  "scripts": {
+    "minify-css": "npx cssnano styles.css styles.min.css",
+    "minify-js": "npx terser app.js -o app.min.js"
+  },
   "dependencies": {
     "node-cron": "^4.2.1",
-    "node-fetch": "^2.7.0"
+    "node-fetch": "^2.7.0",
+    "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "cssnano": "^5.1.15",
+    "terser": "^5.46.0"
   }
 }

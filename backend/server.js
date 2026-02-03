@@ -25,6 +25,7 @@ const mediaUploadRouter = require('./media-upload');
 
 const PORT = process.env.PORT || 3001;
 
+
 // CORS and JSON middleware must come first
 app.use(express.json());
 app.use(cors({
@@ -35,6 +36,10 @@ app.use(cors({
   ],
   credentials: true
 }));
+
+// Serve uploads directory as static files
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use(helmet({
   crossOriginResourcePolicy: false,

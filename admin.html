@@ -1,4 +1,4 @@
-<!doctype html>
+ <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -26,16 +26,23 @@
       <div class="admin-sections">
         <section class="card admin-card">
           <h2 class="admin-title">Announcements</h2>
+          <input id="ann-search" placeholder="Search announcements..." style="margin-bottom:8px;width:100%;" />
           <form id="ann-form" class="admin-form">
+            <input type="hidden" id="ann-id" />
             <label for="ann-text">Text</label>
             <input id="ann-text" placeholder="Announcement text" />
             <button type="submit" class="admin-btn">Save Announcement</button>
+            <button type="button" id="ann-cancel-edit" class="admin-btn" style="display:none;background:#aaa;">Cancel Edit</button>
             <div id="ann-success" class="small muted" style="margin-top:10px"></div>
           </form>
+          <div class="admin-divider"></div>
+          <ul id="ann-list" class="small muted"></ul>
         </section>
         <section class="card admin-card">
           <h2 class="admin-title">Events</h2>
+          <input id="event-search" placeholder="Search events..." style="margin-bottom:8px;width:100%;" />
           <form id="event-form" class="admin-form">
+            <input type="hidden" id="event-id" />
             <label for="event-title">Title</label>
             <input id="event-title" placeholder="Event title" />
             <label for="event-date">Date</label>
@@ -45,10 +52,10 @@
             <label for="event-desc">Description</label>
             <textarea id="event-desc" placeholder="Event description" rows="2"></textarea>
             <button type="submit" class="admin-btn">Save Event</button>
+            <button type="button" id="event-cancel-edit" class="admin-btn" style="display:none;background:#aaa;">Cancel Edit</button>
             <div id="event-success" class="small muted" style="margin-top:10px"></div>
           </form>
           <div class="admin-divider"></div>
-          <h3>Delete Event</h3>
           <ul id="event-list" class="small muted"></ul>
           <div id="event-delete-success" class="small muted" style="margin-top:10px"></div>
         </section>
@@ -88,137 +95,127 @@
     <footer class="site-footer">&copy; St. Rita Parish <br> <i>Designed by DevTwins Developers</i></footer>
 
   <script>
-    // All admin panel JavaScript moved here
-    // Backend JWT authentication
-    const authSection = document.getElementById('auth-section');
-    const adminContent = document.getElementById('admin-content');
-    let jwtToken = localStorage.getItem('jwtToken') || '';
+    document.addEventListener('DOMContentLoaded', function() {
+      // All admin panel JavaScript moved here
+      // Backend JWT authentication
+      const authSection = document.getElementById('auth-section');
+      const adminContent = document.getElementById('admin-content');
 
-    function showAdminContent() {
-      authSection.style.display = 'none';
-      adminContent.style.display = '';
-    }
-    function showLogin() {
-      authSection.style.display = '';
-      adminContent.style.display = 'none';
-    }
-    const logoutBtn = document.getElementById('logout-btn');
-    function updateLogoutBtn() {
-      if (jwtToken) {
-        logoutBtn.style.display = '';
-      } else {
-        logoutBtn.style.display = 'none';
+      function showAdminContent() {
+        authSection.style.display = 'none';
+        adminContent.style.display = '';
       }
-    }
-    if (jwtToken) {
-      showAdminContent();
-      updateLogoutBtn();
-    }
-    logoutBtn.addEventListener('click', function() {
-      jwtToken = '';
-      localStorage.removeItem('jwtToken');
-      showLogin();
-      updateLogoutBtn();
-    });
-
-    document.getElementById('admin-login-form').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const pw = document.getElementById('admin-password').value;
-      const username = document.getElementById('admin-username').value;
-      document.getElementById('auth-error').textContent = '';
-      try {
-        const res = await fetch('http://localhost:3000/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password: pw })
-        });
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || 'Login failed');
+      function showLogin() {
+        authSection.style.display = '';
+        adminContent.style.display = 'none';
+      }
+      const logoutBtn = document.getElementById('logout-btn');
+      function updateLogoutBtn() {
+        const jwtToken = localStorage.getItem('jwtToken') || '';
+        if (jwtToken) {
+          logoutBtn.style.display = '';
+        } else {
+          logoutBtn.style.display = 'none';
         }
-        const data = await res.json();
-        jwtToken = data.token;
-        localStorage.setItem('jwtToken', jwtToken);
+      }
+      if (localStorage.getItem('jwtToken')) {
         showAdminContent();
         updateLogoutBtn();
-      } catch (err) {
-        document.getElementById('auth-error').textContent = err.message;
       }
-    });
+      logoutBtn.addEventListener('click', function() {
+        localStorage.removeItem('jwtToken');
+        showLogin();
+        updateLogoutBtn();
+      });
 
-    // Event logic (backend)
-    const eventForm = document.getElementById('event-form');
-    const eventList = document.getElementById('event-list');
-    const eventDeleteSuccess = document.getElementById('event-delete-success');
-    async function loadEventsForDelete() {
-      if (!eventList) return;
-      eventList.innerHTML = '<li>Loading...</li>';
-      try {
-        const res = await fetch('http://localhost:3000/api/events');
-        if (!res.ok) throw new Error('Failed to load events');
-        const events = await res.json();
-        if (!Array.isArray(events) || events.length === 0) {
-          eventList.innerHTML = '<li>No events found.</li>';
-          return;
-        }
-        eventList.innerHTML = events.map(ev =>
-          `<li>${ev.title} (${ev.date} ${ev.time}) <button data-id="${ev.id}" class="delete-event-btn">Delete</button></li>`
-        ).join('');
-      } catch (err) {
-        eventList.innerHTML = `<li>${err.message}</li>`;
-      }
-    }
-    if (eventList) {
-      eventList.addEventListener('click', async e => {
-        if (e.target.classList.contains('delete-event-btn')) {
-          const id = e.target.getAttribute('data-id');
-          if (!id) return;
-          if (!confirm('Delete this event?')) return;
-          try {
-            const res = await fetch(`http://localhost:3000/api/events/${id}`, {
-              method: 'DELETE',
-              headers: { 'Authorization': 'Bearer ' + jwtToken }
-            });
-            if (!res.ok) {
-              if (res.status === 401) {
-                showLogin();
-                throw new Error('Session expired. Please log in again.');
-              }
-              const data = await res.json();
-              throw new Error(data.error || 'Failed to delete event');
-            }
-            eventDeleteSuccess.textContent = 'Event deleted.';
-            eventDeleteSuccess.style.color = 'green';
-            setTimeout(() => { eventDeleteSuccess.textContent = ''; }, 3000);
-            loadEventsForDelete();
-          } catch (err) {
-            eventDeleteSuccess.textContent = err.message;
-            eventDeleteSuccess.style.color = 'red';
+      document.getElementById('admin-login-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const pw = document.getElementById('admin-password').value;
+        const username = document.getElementById('admin-username').value;
+        document.getElementById('auth-error').textContent = '';
+        try {
+          const res = await fetch('http://localhost:3000/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password: pw })
+          });
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error || 'Login failed');
           }
+          const data = await res.json();
+          localStorage.setItem('jwtToken', data.token);
+          showAdminContent();
+          updateLogoutBtn();
+        } catch (err) {
+          document.getElementById('auth-error').textContent = err.message;
         }
       });
+
+      // ...existing code...
+    });
+
+    // Announcement logic (backend) with edit, search, and pagination
+    const annForm = document.getElementById('ann-form');
+    const annList = document.getElementById('ann-list');
+    const annSearch = document.getElementById('ann-search');
+    const annCancelEdit = document.getElementById('ann-cancel-edit');
+    let editingAnnId = null;
+    let allAnns = [];
+    let annPage = 1;
+    const ANNS_PER_PAGE = 5;
+
+    async function loadAnns() {
+      if (!annList) return;
+      annList.innerHTML = '<li>Loading...</li>';
+      try {
+        const res = await fetch('http://localhost:3000/api/announcements');
+        if (!res.ok) throw new Error('Failed to load announcements');
+        allAnns = await res.json();
+        renderAnnList();
+      } catch (err) {
+        annList.innerHTML = `<li>${err.message}</li>`;
+      }
     }
-    if (eventForm) {
-      eventForm.addEventListener('submit', async e => {
-        e.preventDefault();
-        const title = document.getElementById('event-title').value.trim();
-        const date = document.getElementById('event-date').value;
-        const time = document.getElementById('event-time').value;
-        const description = document.getElementById('event-desc').value.trim();
-        const successDiv = document.getElementById('event-success');
-        if (!title || !date || !time || !description) {
-          successDiv.textContent = 'Please fill all fields.';
-          successDiv.style.color = 'red';
-          return;
+
+    function renderAnnList() {
+      let filtered = allAnns;
+      const q = annSearch.value.trim().toLowerCase();
+      if (q) {
+        filtered = filtered.filter(a =>
+          a.content.toLowerCase().includes(q) ||
+          (a.title && a.title.toLowerCase().includes(q))
+        );
+      }
+      const start = (annPage - 1) * ANNS_PER_PAGE;
+      const paged = filtered.slice(start, start + ANNS_PER_PAGE);
+      annList.innerHTML = paged.map(a =>
+        `<li><b>${a.title || 'Announcement'}</b> (${a.date ? a.date.split('T')[0] : ''})<br>${a.content}<br>
+        <button data-id="${a.id}" class="edit-ann-btn">Edit</button>
+        <button data-id="${a.id}" class="delete-ann-btn">Delete</button></li>`
+      ).join('') || '<li>No announcements found.</li>';
+      // Pagination controls
+      const totalPages = Math.ceil(filtered.length / ANNS_PER_PAGE);
+      if (totalPages > 1) {
+        let pag = '<div style="margin-top:8px;">';
+        for (let i = 1; i <= totalPages; i++) {
+          pag += `<button class="admin-btn" style="margin:2px;${i===annPage?'background:#1976d2;color:#fff;':''}" data-ann-page="${i}">${i}</button>`;
         }
+        pag += '</div>';
+        annList.innerHTML += pag;
+      }
+    }
+
+    annList.addEventListener('click', async e => {
+      const jwtToken = localStorage.getItem('jwtToken') || '';
+      if (e.target.classList.contains('delete-ann-btn')) {
+        const id = e.target.getAttribute('data-id');
+        if (!id) return;
+        if (!confirm('Delete this announcement?')) return;
         try {
-          const res = await fetch('http://localhost:3000/api/events', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer ' + jwtToken
-            },
-            body: JSON.stringify({ title, date, time, description })
+          const res = await fetch(`http://localhost:3000/api/announcements/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + jwtToken }
           });
           if (!res.ok) {
             if (res.status === 401) {
@@ -226,59 +223,91 @@
               throw new Error('Session expired. Please log in again.');
             }
             const data = await res.json();
-            throw new Error(data.error || 'Failed to save event');
+            throw new Error(data.error || 'Failed to delete announcement');
           }
-          eventForm.reset();
-          successDiv.textContent = 'Saved event.';
+          loadAnns();
+        } catch (err) {
+          alert(err.message);
+        }
+      } else if (e.target.classList.contains('edit-ann-btn')) {
+        const id = e.target.getAttribute('data-id');
+        const a = allAnns.find(a => a.id == id);
+        if (!a) return;
+        editingAnnId = id;
+        document.getElementById('ann-id').value = id;
+        document.getElementById('ann-text').value = a.content;
+        annCancelEdit.style.display = '';
+      } else if (e.target.dataset.annPage) {
+        annPage = parseInt(e.target.dataset.annPage);
+        renderAnnList();
+      }
+    });
+
+    annSearch.addEventListener('input', () => {
+      annPage = 1;
+      renderAnnList();
+    });
+
+    annCancelEdit.addEventListener('click', () => {
+      editingAnnId = null;
+      annForm.reset();
+      annCancelEdit.style.display = 'none';
+    });
+
+    if (annForm) {
+      annForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const jwtToken = localStorage.getItem('jwtToken') || '';
+        const t = document.getElementById('ann-text').value.trim();
+        const successDiv = document.getElementById('ann-success');
+        if (!t) {
+          successDiv.textContent = 'Enter announcement.';
+          successDiv.style.color = 'red';
+          return;
+        }
+        try {
+          let res;
+          if (editingAnnId) {
+            res = await fetch(`http://localhost:3000/api/announcements/${editingAnnId}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + jwtToken
+              },
+              body: JSON.stringify({ title: 'Announcement', content: t })
+            });
+          } else {
+            res = await fetch('http://localhost:3000/api/announcements', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + jwtToken
+              },
+              body: JSON.stringify({ title: 'Announcement', content: t, date: new Date().toISOString() })
+            });
+          }
+          if (!res.ok) {
+            if (res.status === 401) {
+              showLogin();
+              throw new Error('Session expired. Please log in again.');
+            }
+            const data = await res.json();
+            throw new Error(data.error || 'Failed to save announcement');
+          }
+          document.getElementById('ann-text').value = '';
+          editingAnnId = null;
+          annCancelEdit.style.display = 'none';
+          successDiv.textContent = 'Saved announcement.';
           successDiv.style.color = 'green';
           setTimeout(() => { successDiv.textContent = ''; }, 4000);
-          loadEventsForDelete();
+          loadAnns();
         } catch (err) {
           successDiv.textContent = err.message;
           successDiv.style.color = 'red';
         }
       });
-      // Load events for deletion on page load
-      loadEventsForDelete();
+      loadAnns();
     }
-
-    // Announcement logic (backend)
-    const annForm = document.getElementById('ann-form');
-    annForm.addEventListener('submit', async e => {
-      e.preventDefault();
-      const t = document.getElementById('ann-text').value.trim();
-      const successDiv = document.getElementById('ann-success');
-      if (!t) {
-        successDiv.textContent = 'Enter announcement.';
-        successDiv.style.color = 'red';
-        return;
-      }
-      try {
-        const res = await fetch('http://localhost:3000/api/announcements', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + jwtToken
-          },
-          body: JSON.stringify({ title: 'Announcement', content: t, date: new Date().toISOString() })
-        });
-        if (!res.ok) {
-          if (res.status === 401) {
-            showLogin();
-            throw new Error('Session expired. Please log in again.');
-          }
-          const data = await res.json();
-          throw new Error(data.error || 'Failed to save announcement');
-        }
-        document.getElementById('ann-text').value = '';
-        successDiv.textContent = 'Saved announcement.';
-        successDiv.style.color = 'green';
-        setTimeout(() => { successDiv.textContent = ''; }, 4000);
-      } catch (err) {
-        successDiv.textContent = err.message;
-        successDiv.style.color = 'red';
-      }
-    });
 
     // Message logic (backend)
     const messForm = document.getElementById('mess-form');
@@ -286,6 +315,7 @@
     if (messForm) {
       messForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const jwtToken = localStorage.getItem('jwtToken') || '';
         const message = document.getElementById('mess-text').value.trim();
         const successDiv = document.getElementById('mess-success');
         if (!message) {
@@ -323,27 +353,30 @@
       });
     }
 
-    // Media upload logic (backend)
+    // NEW MEDIA UPLOAD LOGIC (robust, announcement/event style)
     const mediaForm = document.getElementById('media-form');
     if (mediaForm) {
-      mediaForm.addEventListener('submit', async e => {
+      mediaForm.addEventListener('submit', async function(e) {
         e.preventDefault();
+        const jwtToken = localStorage.getItem('jwtToken') || '';
         const files = document.getElementById('media-files').files;
         const caption = document.getElementById('media-caption').value.trim();
         const event = document.getElementById('media-event').value.trim();
         const date = document.getElementById('media-date').value;
         const successDiv = document.getElementById('media-success');
+        successDiv.textContent = '';
+        successDiv.style.color = '';
         if (!files.length) {
           successDiv.textContent = 'Please select at least one file.';
           successDiv.style.color = 'red';
           return;
         }
-        // 1. Upload files to /api/media/upload
+        // Step 1: Upload files
         const formData = new FormData();
         for (let i = 0; i < files.length; i++) {
           formData.append('mediaFiles', files[i]);
         }
-        let uploadedFiles;
+        let uploadedFiles = [];
         try {
           const uploadRes = await fetch('http://localhost:3000/api/media/upload', {
             method: 'POST',
@@ -363,14 +396,14 @@
           const data = await uploadRes.json();
           uploadedFiles = data.files;
         } catch (err) {
-          successDiv.textContent = err.message;
+          successDiv.textContent = err.message || 'Upload failed.';
           successDiv.style.color = 'red';
           return;
         }
-        // 2. Save metadata for each file to /api/media
+        // Step 2: Save metadata for each file
         let allSuccess = true;
         for (const file of uploadedFiles) {
-          const type = file.mimetype.startsWith('image') ? 'image' : 'video';
+          const type = file.mimetype && file.mimetype.startsWith('image') ? 'image' : 'video';
           const meta = {
             type,
             src: file.path,
@@ -395,19 +428,20 @@
           }
         }
         if (allSuccess) {
-          successDiv.textContent = 'Media uploaded.';
+          successDiv.textContent = 'Media uploaded successfully.';
           successDiv.style.color = 'green';
           mediaForm.reset();
-          setTimeout(() => { successDiv.textContent = ''; }, 4000);
         } else {
           successDiv.textContent = 'Some files failed to save metadata.';
           successDiv.style.color = 'orange';
         }
+        setTimeout(() => { successDiv.textContent = ''; }, 4000);
       });
     }
 
     // Show subscribed phone numbers (backend)
     async function renderPhoneList() {
+      const jwtToken = localStorage.getItem('jwtToken') || '';
       const phoneList = document.getElementById('phone-list');
       phoneList.innerHTML = '<li>Loading...</li>';
       try {
