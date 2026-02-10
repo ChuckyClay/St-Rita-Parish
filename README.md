@@ -4,7 +4,7 @@ Production-ready Catholic parish website with:
 
 - Modern responsive frontend (HTML, CSS, JS)
 - Node.js/Express backend with secure JWT admin authentication
-- Admin panel for announcements, events, media, messages, and phone management
+- Admin panel for announcements, events, messages, and phone management
 - Automated daily Catholic readings (external API)
 - Data stored in JSON files (no database required)
 - Security best practices: environment variables, input validation, rate limiting, helmet
@@ -21,7 +21,7 @@ Production-ready Catholic parish website with:
 
 - Frontend: `index.html`, `about.html`, `admin.html`, etc.
 - Backend: `backend/` (Express server, routes, data)
-- Data: `announcements.json`, `events.json`, `gallery.json`, `messages.json`, `phones.json`, `readings.json`
+- Data: `announcements.json`, `events.json`, `messages.json`, `phones.json`, `readings.json`
 
 ## License
 MIT

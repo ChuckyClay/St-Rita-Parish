@@ -17,10 +17,10 @@ const rateLimit = require('express-rate-limit');
 const { router: authRouter, requireAuth } = require('./auth');
 const phonesRouter = require('./phones');
 const messagesRouter = require('./messages');
-const mediaRouter = require('./media');
+
 const announcementsRouter = require('./announcements');
 const eventsRouter = require('./events');
-const mediaUploadRouter = require('./media-upload');
+
 
 
 const PORT = process.env.PORT || 3001;
@@ -37,9 +37,7 @@ app.use(cors({
   credentials: true
 }));
 
-// Serve uploads directory as static files
-const path = require('path');
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 
 app.use(helmet({
   crossOriginResourcePolicy: false,
@@ -66,19 +64,7 @@ app.use('/api/messages', (req, res, next) => {
   }
   next();
 }, messagesRouter);
-// Media API
 
-app.use('/api/media', (req, res, next) => {
-  if ((req.method === 'POST' || req.method === 'DELETE')) {
-    return requireAuth(req, res, next);
-  }
-  next();
-}, mediaRouter);
-
-
-
-// Register media upload route after CORS and express.json
-app.use('/api/media/upload', mediaUploadRouter);
 
 // Auth API
 app.use('/api/auth', authRouter);

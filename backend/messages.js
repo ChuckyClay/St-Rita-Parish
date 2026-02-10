@@ -1,50 +1,55 @@
+
 // backend/messages.js
-// Handles sending messages to subscribers (metadata only, no SMS integration)
+// Handles sending messages to subscribers (metadata only, now using SQLite)
 
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const fs = require('fs');
-const path = require('path');
+const db = require('./db');
 const router = express.Router();
-
-const MESSAGES_FILE = path.join(__dirname, 'messages.json');
-
-function readMessages() {
-  try {
-    const data = fs.readFileSync(MESSAGES_FILE, 'utf-8');
-    return JSON.parse(data);
-  } catch {
-    return [];
-  }
-}
-
-function writeMessages(data) {
-  fs.writeFileSync(MESSAGES_FILE, JSON.stringify(data, null, 2));
-}
 
 // Get all messages
 router.get('/', (req, res) => {
-  res.json(readMessages());
+  db.all('SELECT * FROM messages ORDER BY date DESC', [], (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Database error.' });
+    res.json(rows);
+  });
 });
 
 // Send a message (store metadata)
 router.post(
   '/',
-  [
-    body('message').isString().trim().notEmpty().withMessage('Message is required.')
-  ],
+  [body('message').isString().trim().notEmpty().withMessage('Message is required.')],
   (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
     const { message } = req.body;
-    const messages = readMessages();
-    const newMsg = { id: Date.now(), message, date: new Date().toISOString() };
-    messages.unshift(newMsg);
-    writeMessages(messages);
-    res.status(201).json(newMsg);
+    const msgDate = new Date().toISOString();
+    db.run(
+      'INSERT INTO messages (message, date) VALUES (?, ?)',
+      [message, msgDate],
+      function (err) {
+        if (err) return res.status(500).json({ error: 'Database error.' });
+        db.get('SELECT * FROM messages WHERE id = ?', [this.lastID], (err, row) => {
+          if (err) return res.status(500).json({ error: 'Database error.' });
+          res.status(201).json(row);
+        });
+      }
+    );
   }
 );
+
+// Delete a message by id
+router.delete('/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  db.run('DELETE FROM messages WHERE id = ?', [id], function (err) {
+    if (err) return res.status(500).json({ error: 'Database error.' });
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Message not found.' });
+    }
+    res.json({ success: true });
+  });
+});
 
 module.exports = router;

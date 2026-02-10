@@ -16,7 +16,6 @@ Thumbs.db
 backend/*.json
 !backend/announcements.json
 !backend/events.json
-!backend/gallery.json
 !backend/messages.json
 !backend/phones.json
 !readings.json
