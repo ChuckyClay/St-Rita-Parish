@@ -41,41 +41,22 @@
       const sourceLink = document.getElementById('source-link');
       try {
         const res = await fetch('https://st-rita-parish.onrender.com/api/readings');
-        const data = await res.json();
+        const readings = await res.json();
         const today = new Date().toISOString().split('T')[0];
-        // Support both old and new (multi-language) formats
-        let firstReading = data.firstReading;
-        let psalm = data.psalm;
-        let gospel = data.gospel;
-        // If multi-language, default to English
-        if (firstReading.en && psalm.en && gospel.en) {
-          firstReading = firstReading.en;
-          psalm = psalm.en;
-          gospel = gospel.en;
-        }
-        if (data.date === today) {
-          container.innerHTML = `
-            <p class="meta">${new Date(data.date).toLocaleDateString()}</p>
-            <div class="card">
-              <h3>First Reading</h3>
-              <h4>${firstReading.title}</h4>
-              <p>${firstReading.text}</p>
-            </div>
-            <div class="card">
-              <h3>Responsorial Psalm</h3>
-              <h4>${psalm.title}</h4>
-              <p style="white-space: pre-line;">${psalm.text}</p>
-            </div>
-            <div class="card">
-              <h3>Gospel</h3>
-              <h4>${gospel.title}</h4>
-              <p>${gospel.text}</p>
-            </div>
-          `;
-          sourceLink.href = data.source;
+        const todayReadings = readings.filter(r => r.date === today);
+        if (todayReadings.length > 0) {
+          container.innerHTML = `<p class="meta">${new Date(today).toLocaleDateString()}</p>` +
+            todayReadings.map(r => `
+              <div class="card">
+                <h3>${r.title}</h3>
+                <p style="white-space: pre-line;">${r.content}</p>
+              </div>
+            `).join('');
         } else {
           container.innerHTML = `<div class="card"><p>No readings available for today.</p></div>`;
         }
+        // Optionally set source link if you want
+        // sourceLink.href = 'https://www.catholic.org/bible/daily_reading/';
       } catch (err) {
         container.innerHTML = `<div class="card"><p>Unable to load daily readings.</p></div>`;
       }
