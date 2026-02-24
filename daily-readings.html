@@ -36,6 +36,7 @@
   <footer class="site-footer">&copy; 2025 St. Rita Parish <br> <i>Designed by DevTwins Developers</i></footer>
 
   <script>
+    alert('Daily readings script loaded!');
     async function loadDailyReadingsFull() {
       const container = document.getElementById('daily-readings-full');
       const sourceLink = document.getElementById('source-link');
@@ -43,9 +44,11 @@
         const res = await fetch('https://st-rita-parish.onrender.com/api/readings');
         const readings = await res.json();
         const today = new Date().toISOString().split('T')[0];
+        // Debug: log dates
+        console.log('Today:', today);
+        readings.forEach(r => console.log('Reading date:', r.date, 'Title:', r.title));
         // Handle possible date format mismatches
         const todayReadings = readings.filter(r => {
-          // Try to match date exactly, or ignore timezones
           return r.date && r.date.substring(0, 10) === today;
         });
         if (todayReadings.length > 0) {
@@ -69,5 +72,8 @@
     loadDailyReadingsFull();
   </script>
   <script src="app.js"></script>
+  <script>
+    alert('Standalone script tag executed!');
+  </script>
 </body>
 </html>
