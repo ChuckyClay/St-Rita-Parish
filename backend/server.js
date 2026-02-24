@@ -1,14 +1,6 @@
 // ...existing code...
 // Place this after all app.use middleware, before any API routes
-const fetchAndStoreReadings = require('./readings-fetcher');
-app.post('/api/fetch-readings', async (req, res) => {
-  try {
-    await fetchAndStoreReadings();
-    res.json({ success: true, message: 'Readings fetched and stored.' });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
+
 // Simple Express server for St. Rita Parish backend
 const express = require('express');
 const app = express();
@@ -106,6 +98,17 @@ app.get('/api/test', (req, res) => res.json({ ok: true }));
 
 app.get('/', (req, res) => {
   res.send('St. Rita Parish backend is running!');
+});
+
+// TEMP: Manual trigger for readings-fetcher
+const fetchAndStoreReadings = require('./readings-fetcher');
+app.post('/api/fetch-readings', async (req, res) => {
+  try {
+    await fetchAndStoreReadings();
+    res.json({ success: true, message: 'Readings fetched and stored.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 app.listen(PORT, () => {
