@@ -1,9 +1,10 @@
 # Node
+
 node_modules/
 .env
 *.env
 *.log
-package-lock.json
+# package-lock.json should be committed for backend reliability
 
 # VS Code
 .vscode/
