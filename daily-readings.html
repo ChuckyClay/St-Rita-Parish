@@ -43,7 +43,11 @@
         const res = await fetch('https://st-rita-parish.onrender.com/api/readings');
         const readings = await res.json();
         const today = new Date().toISOString().split('T')[0];
-        const todayReadings = readings.filter(r => r.date === today);
+        // Handle possible date format mismatches
+        const todayReadings = readings.filter(r => {
+          // Try to match date exactly, or ignore timezones
+          return r.date && r.date.substring(0, 10) === today;
+        });
         if (todayReadings.length > 0) {
           container.innerHTML = `<p class="meta">${new Date(today).toLocaleDateString()}</p>` +
             todayReadings.map(r => `
