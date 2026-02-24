@@ -1,5 +1,5 @@
 // ...existing code...
-// TEMP: Manual trigger for readings-fetcher (must come after app is defined)
+// Place this after all app.use middleware, before any API routes
 const fetchAndStoreReadings = require('./readings-fetcher');
 app.post('/api/fetch-readings', async (req, res) => {
   try {
