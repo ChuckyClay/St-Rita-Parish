@@ -4,10 +4,14 @@ const db = require('./db');
 const router = express.Router();
 
 // GET /api/readings - Get today's readings
+
 router.get('/', (req, res) => {
   const today = new Date().toISOString().split('T')[0];
   db.all('SELECT * FROM readings WHERE date = ? ORDER BY id ASC', [today], (err, rows) => {
-    if (err) return res.status(500).json({ error: 'Database error.' });
+    if (err) {
+      console.error('DB error:', err);
+      return res.status(500).json({ error: 'Database error.' });
+    }
     res.json(rows);
   });
 });

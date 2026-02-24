@@ -103,10 +103,11 @@ app.get('/', (req, res) => {
 
 // TEMP: Manual trigger for readings-fetcher
 const fetchAndStoreReadings = require('./readings-fetcher');
+
 app.post('/api/fetch-readings', async (req, res) => {
   try {
-    await fetchAndStoreReadings();
-    res.json({ success: true, message: 'Readings fetched and stored.' });
+    const count = await fetchAndStoreReadings();
+    res.json({ success: true, message: `Readings fetched and stored (${count} readings).` });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

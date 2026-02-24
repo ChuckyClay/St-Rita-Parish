@@ -41,16 +41,17 @@ async function loadEventsPreview() {
 }
 
 // Load daily readings preview
+
 async function loadDailyReadingsPreview() {
   const container = document.getElementById('daily-readings-preview');
   if (!container) return;
   try {
     const res = await fetch('https://st-rita-parish.onrender.com/api/readings');
+    if (!res.ok) throw new Error('Failed to fetch readings');
     const readings = await res.json();
     const today = new Date().toISOString().split('T')[0];
-    const todayReadings = readings.filter(r => r.date === today);
+    const todayReadings = readings.filter(r => r.date && r.date.substring(0, 10) === today);
     if (todayReadings.length > 0) {
-      // Show preview of first 3 readings
       container.innerHTML = `<p class="meta">${new Date(today).toLocaleDateString()}</p>` +
         todayReadings.slice(0, 3).map(r => `
           <div class="card">
