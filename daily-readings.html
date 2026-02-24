@@ -36,8 +36,9 @@
   <footer class="site-footer">&copy; 2025 St. Rita Parish <br> <i>Designed by DevTwins Developers</i></footer>
 
   <script>
-    alert('Daily readings script loaded!');
     async function loadDailyReadingsFull() {
+        // Log the full readings array
+        console.log('Readings array:', readings);
       const container = document.getElementById('daily-readings-full');
       const sourceLink = document.getElementById('source-link');
       try {
