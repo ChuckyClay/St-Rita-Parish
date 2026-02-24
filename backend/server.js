@@ -1,6 +1,4 @@
-
 // ...existing code...
-
 // TEMP: Manual trigger for readings-fetcher (must come after app is defined)
 const fetchAndStoreReadings = require('./readings-fetcher');
 app.post('/api/fetch-readings', async (req, res) => {
