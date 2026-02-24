@@ -37,8 +37,34 @@
 
   <script>
     async function loadDailyReadingsFull() {
-        // Log the full readings array
-        console.log('Readings array:', readings);
+        try {
+          const res = await fetch('https://st-rita-parish.onrender.com/api/readings');
+          const readings = await res.json();
+          console.log('Readings array:', readings);
+          const today = new Date().toISOString().split('T')[0];
+          // Debug: log dates
+          console.log('Today:', today);
+          readings.forEach(r => console.log('Reading date:', r.date, 'Title:', r.title));
+          // Handle possible date format mismatches
+          const todayReadings = readings.filter(r => {
+            return r.date && r.date.substring(0, 10) === today;
+          });
+          if (todayReadings.length > 0) {
+            container.innerHTML = `<p class="meta">${new Date(today).toLocaleDateString()}</p>` +
+              todayReadings.map(r => `
+                <div class="card">
+                  <h3>${r.title}</h3>
+                  <p style="white-space: pre-line;">${r.content}</p>
+                </div>
+              `).join('');
+          } else {
+            container.innerHTML = `<div class="card"><p>No readings available for today.</p></div>`;
+          }
+          // Optionally set source link if you want
+          // sourceLink.href = 'https://www.catholic.org/bible/daily_reading/';
+        } catch (err) {
+          container.innerHTML = `<div class="card"><p>Unable to load daily readings.</p></div>`;
+        }
       const container = document.getElementById('daily-readings-full');
       const sourceLink = document.getElementById('source-link');
       try {
