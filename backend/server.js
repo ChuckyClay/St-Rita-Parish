@@ -1,3 +1,13 @@
+// TEMP: Manual trigger for readings-fetcher
+const fetchAndStoreReadings = require('./readings-fetcher');
+app.post('/api/fetch-readings', async (req, res) => {
+  try {
+    await fetchAndStoreReadings();
+    res.json({ success: true, message: 'Readings fetched and stored.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 // Simple Express server for St. Rita Parish backend
 const express = require('express');
 const app = express();
