@@ -65,8 +65,8 @@
         } catch (err) {
           container.innerHTML = `<div class="card"><p>Unable to load daily readings.</p></div>`;
         }
-      const container = document.getElementById('daily-readings-full');
-      const sourceLink = document.getElementById('source-link');
+        const container = document.getElementById('daily-readings-full'); // Moved to the top
+        const sourceLink = document.getElementById('source-link'); // Moved to the top
       try {
         const res = await fetch('https://st-rita-parish.onrender.com/api/readings');
         const readings = await res.json();
@@ -99,8 +99,5 @@
     loadDailyReadingsFull();
   </script>
   <script src="app.js"></script>
-  <script>
-    alert('Standalone script tag executed!');
-  </script>
 </body>
 </html>
