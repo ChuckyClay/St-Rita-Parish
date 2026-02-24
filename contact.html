@@ -78,9 +78,9 @@
         <div>
           <div class="card">
             <h3>Parish Priest Contact</h3>
-            <p><strong>Name:</strong> Fr. John Mwangi</p>
-            <p><strong>Phone:</strong> +254712 345 678</p>
-            <p><strong>Email:</strong> fr.johnmwangi@stritaparish.org</p>
+            <p><strong>Name:</strong> Fr. Dr. Kinoti E. Kithuri</p>
+            <p><strong>Phone:</strong> +254 724 428 772</p>
+            <p><strong>Email:</strong> ekithuri@gmail.com</p>
             <p><strong>Office Hours:</strong> Tuesday - Friday, 9:00 AM - 5:00 PM</p>
           </div><br>
           <div class="card">
@@ -118,7 +118,8 @@
 
   <script src="app.js"></script>
   <script>
-    document.getElementById('contact-form').addEventListener('submit', (e) => {
+    // Integrate contact form with backend
+    document.getElementById('contact-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = document.getElementById('name').value.trim();
       const email = document.getElementById('email').value.trim();
@@ -129,30 +130,59 @@
         successDiv.style.color = 'red';
         return;
       }
-      // Simulate sending
-      successDiv.textContent = 'Thank you for your message! We will get back to you soon.';
-      successDiv.style.color = 'green';
-      document.getElementById('contact-form').reset();
+      try {
+        // Send message to backend
+        const res = await fetch('http://localhost:3000/api/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: `[${name} | ${email}] ${message}` })
+        });
+        if (res.ok) {
+          successDiv.textContent = 'Thank you for your message! We will get back to you soon.';
+          successDiv.style.color = 'green';
+          document.getElementById('contact-form').reset();
+        } else {
+          const data = await res.json();
+          successDiv.textContent = data.error || 'Failed to send message.';
+          successDiv.style.color = 'red';
+        }
+      } catch (err) {
+        successDiv.textContent = 'Unable to send message. Please try again later.';
+        successDiv.style.color = 'red';
+      }
       setTimeout(() => { successDiv.textContent = ''; }, 5000);
     });
-    // SMS form logic
-    document.getElementById('sms-form').addEventListener('submit', (e) => {
+
+    // Integrate SMS form with backend
+    document.getElementById('sms-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const phone = document.getElementById('sms-phone').value.trim();
+      const smsSuccess = document.getElementById('sms-success');
       if (!/^\d{10,13}$/.test(phone)) {
-        document.getElementById('sms-success').textContent = 'Please enter a valid phone number.';
+        smsSuccess.textContent = 'Please enter a valid phone number.';
+        smsSuccess.style.color = 'red';
         return;
       }
-      // Store phone number in localStorage (for demo)
-      let phones = JSON.parse(localStorage.getItem('smsPhones') || '[]');
-      if (!phones.includes(phone)) {
-        phones.push(phone);
-        localStorage.setItem('smsPhones', JSON.stringify(phones));
-        document.getElementById('sms-success').textContent = 'You have been subscribed for SMS updates!';
-      } else {
-        document.getElementById('sms-success').textContent = 'This number is already subscribed.';
+      try {
+        const res = await fetch('http://localhost:3000/api/phones', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone })
+        });
+        if (res.ok) {
+          smsSuccess.textContent = 'You have been subscribed for SMS updates!';
+          smsSuccess.style.color = 'green';
+          document.getElementById('sms-form').reset();
+        } else {
+          const data = await res.json();
+          smsSuccess.textContent = data.error || 'Failed to subscribe.';
+          smsSuccess.style.color = 'red';
+        }
+      } catch (err) {
+        smsSuccess.textContent = 'Unable to subscribe. Please try again later.';
+        smsSuccess.style.color = 'red';
       }
-      document.getElementById('sms-phone').value = '';
+      setTimeout(() => { smsSuccess.textContent = ''; }, 5000);
     });
   </script>
 </body>
