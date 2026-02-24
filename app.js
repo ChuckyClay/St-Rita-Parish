@@ -5,7 +5,7 @@ async function loadAnnouncementsPreview() {
   const container = document.getElementById('announcements-preview');
   if (!container) return;
   try {
-    const res = await fetch('http://localhost:3000/api/announcements');
+    const res = await fetch('https://st-rita-parish.onrender.com/api/announcements');
     const announcements = await res.json();
     const recent = announcements.slice(0, 3); // Show latest 3
     container.innerHTML = recent.map(ann => `
@@ -25,7 +25,7 @@ async function loadEventsPreview() {
   const container = document.getElementById('events-preview');
   if (!container) return;
   try {
-    const res = await fetch('http://localhost:3000/api/events');
+    const res = await fetch('https://st-rita-parish.onrender.com/api/events');
     const events = await res.json();
     const upcoming = events.slice(0, 3); // Show next 3
     container.innerHTML = upcoming.map(event => `
@@ -45,7 +45,7 @@ async function loadDailyReadingsPreview() {
   const container = document.getElementById('daily-readings-preview');
   if (!container) return;
   try {
-    const res = await fetch('http://localhost:3000/api/readings');
+    const res = await fetch('https://st-rita-parish.onrender.com/api/readings');
     const data = await res.json();
     const today = new Date().toISOString().split('T')[0];
     // Default language is English

@@ -40,7 +40,7 @@
       const container = document.getElementById('daily-readings-full');
       const sourceLink = document.getElementById('source-link');
       try {
-        const res = await fetch('http://localhost:3000/api/readings');
+        const res = await fetch('https://st-rita-parish.onrender.com/api/readings');
         const data = await res.json();
         const today = new Date().toISOString().split('T')[0];
         // Support both old and new (multi-language) formats
