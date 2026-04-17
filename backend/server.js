@@ -1,12 +1,23 @@
-// ...existing code...
-// Place this after all app.use middleware, before any API routes
-
-// Simple Express server for St. Rita Parish backend
 const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+require('dotenv').config();
+
+const { router: authRouter, requireAuth } = require('./auth');
+const phonesRouter = require('./phones');
+const messagesRouter = require('./messages');
+const announcementsRouter = require('./announcements');
+const eventsRouter = require('./events');
+const readingsRouter = require('./readings');
+const fetchAndStoreReadings = require('./readings-fetcher');
+
 const app = express();
-// CORS and JSON middleware must be first
+const PORT = process.env.PORT || 3001;
+
 app.use(express.json());
-app.use(require('cors')({
+
+app.use(cors({
   origin: [
     'https://st-rita-parish-frontend.onrender.com',
     'http://localhost:3000',
@@ -14,97 +25,57 @@ app.use(require('cors')({
   ],
   credentials: true
 }));
-const cors = require('cors');
-require('dotenv').config();
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const { router: authRouter, requireAuth } = require('./auth');
-const phonesRouter = require('./phones');
-const messagesRouter = require('./messages');
-
-const announcementsRouter = require('./announcements');
-const eventsRouter = require('./events');
-
-
-
-const PORT = process.env.PORT || 3001;
-
-
-// CORS and JSON middleware must come first
-app.use(express.json());
-app.use(cors({
-  origin: [
-    'http://localhost:3000', // frontend dev
-    'http://127.0.0.1:5500', // local static server (e.g. Live Server)
-    // 'https://your-production-domain.com' // production
-  ],
-  credentials: true
-}));
-
-
 
 app.use(helmet({
   crossOriginResourcePolicy: false,
 }));
-// Handle preflight OPTIONS requests for all routes
+
 app.use(rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
 }));
 
-// Phones API
+app.use('/api/auth', authRouter);
+
 app.use('/api/phones', (req, res, next) => {
-  if (req.method === 'GET') {
+  if (req.method === 'GET' || req.method === 'DELETE') {
     return requireAuth(req, res, next);
   }
   next();
 }, phonesRouter);
-// Messages API
+
 app.use('/api/messages', (req, res, next) => {
-  if (req.method === 'POST') {
+  if (['GET', 'POST', 'DELETE'].includes(req.method)) {
     return requireAuth(req, res, next);
   }
   next();
 }, messagesRouter);
 
-
-// Auth API
-app.use('/api/auth', authRouter);
-
-// Announcements API
-const announcementsRouterPatched = require('./announcements');
 app.use('/api/announcements', (req, res, next) => {
-  if ((req.method === 'POST' || req.method === 'DELETE')) {
+  if (['POST', 'PUT', 'DELETE'].includes(req.method)) {
     return requireAuth(req, res, next);
   }
   next();
-}, announcementsRouterPatched);
-// Events API
-const eventsRouterPatched = require('./events');
-app.use('/api/events', (req, res, next) => {
-  if ((req.method === 'POST' || req.method === 'DELETE')) {
-    return requireAuth(req, res, next);
-  }
-  next();
-}, eventsRouterPatched);
+}, announcementsRouter);
 
-// Daily Readings API
-const readingsRouter = require('./readings');
+app.use('/api/events', (req, res, next) => {
+  if (['POST', 'PUT', 'DELETE'].includes(req.method)) {
+    return requireAuth(req, res, next);
+  }
+  next();
+}, eventsRouter);
+
 app.use('/api/readings', readingsRouter);
 
-// Place this after all app.use middleware, before any API routes
 app.get('/api/test', (req, res) => res.json({ ok: true }));
 
 app.get('/', (req, res) => {
   res.send('St. Rita Parish backend is running!');
 });
 
-// TEMP: Manual trigger for readings-fetcher
-const fetchAndStoreReadings = require('./readings-fetcher');
-
-app.post('/api/fetch-readings', async (req, res) => {
+app.post('/api/fetch-readings', requireAuth, async (req, res) => {
   try {
     const count = await fetchAndStoreReadings();
     res.json({ success: true, message: `Readings fetched and stored (${count} readings).` });
