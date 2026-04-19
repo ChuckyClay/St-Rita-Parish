@@ -16,14 +16,21 @@ function makeTimestamp() {
 }
 
 function cleanupOldBackups() {
+  ensureBackupDir();
+
   const files = fs.readdirSync(backupDir)
     .filter(file => file.endsWith('.sqlite'))
-    .map(file => ({
-      file,
-      fullPath: path.join(backupDir, file),
-      mtime: fs.statSync(path.join(backupDir, file)).mtimeMs
-    }))
-    .sort((a, b) => b.mtime - a.mtime);
+    .map(file => {
+      const fullPath = path.join(backupDir, file);
+      const stats = fs.statSync(fullPath);
+      return {
+        file,
+        fullPath,
+        size: stats.size,
+        createdAt: stats.mtimeMs
+      };
+    })
+    .sort((a, b) => b.createdAt - a.createdAt);
 
   const oldFiles = files.slice(MAX_BACKUPS);
 
@@ -61,4 +68,63 @@ function backupDatabase() {
   });
 }
 
-module.exports = { backupDatabase };
+function listBackups() {
+  ensureBackupDir();
+
+  const files = fs.readdirSync(backupDir)
+    .filter(file => file.endsWith('.sqlite'))
+    .map(file => {
+      const fullPath = path.join(backupDir, file);
+      const stats = fs.statSync(fullPath);
+      return {
+        file,
+        size: stats.size,
+        createdAt: stats.mtime
+      };
+    })
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  return files;
+}
+
+function getBackupPath(fileName) {
+  ensureBackupDir();
+
+  if (
+    !fileName ||
+    typeof fileName !== 'string' ||
+    fileName.includes('..') ||
+    fileName.includes('/') ||
+    fileName.includes('\\') ||
+    !fileName.endsWith('.sqlite')
+  ) {
+    return null;
+  }
+
+  const fullPath = path.join(backupDir, fileName);
+
+  if (!fs.existsSync(fullPath)) {
+    return null;
+  }
+
+  return fullPath;
+}
+
+function deleteBackup(fileName) {
+  const fullPath = getBackupPath(fileName);
+
+  if (!fullPath) {
+    throw new Error('Backup file not found.');
+  }
+
+  fs.unlinkSync(fullPath);
+
+  return { success: true, fileName };
+}
+
+module.exports = {
+  backupDatabase,
+  listBackups,
+  getBackupPath,
+  deleteBackup
+};

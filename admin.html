@@ -131,10 +131,16 @@
         </section>
 
         <section class="card admin-card">
-          <h3 class="admin-title">Database Backup</h3>
-          <p>Create a backup copy of the SQLite database.</p>
+          <h3 class="admin-title">Database Backups</h3>
+          <p>Create, view, download, and delete SQLite backups.</p>
+
           <button id="backup-db-btn" class="admin-btn">Create Backup</button>
           <div id="backup-db-status" class="small muted" style="margin-top:10px;"></div>
+
+          <div class="admin-divider"></div>
+
+          <button id="refresh-backups-btn" class="admin-btn">Refresh Backup List</button>
+          <ul id="backup-list" class="list" style="margin-top:10px;"></ul>
         </section>
       </div>
     </section>
@@ -184,6 +190,144 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
     }
+
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    async function loadBackups() {
+      const backupList = document.getElementById('backup-list');
+      backupList.innerHTML = '<li>Loading backups...</li>';
+
+      try {
+        const backups = await apiFetch('/api/admin/backups', {}, true);
+
+        if (!Array.isArray(backups) || backups.length === 0) {
+          backupList.innerHTML = '<li>No backups found.</li>';
+          return;
+        }
+
+        backupList.innerHTML = backups.map(b => `
+          <li>
+            <b>${escapeHtml(b.file)}</b><br>
+            <span class="small muted">
+              ${new Date(b.createdAt).toLocaleString()} · ${formatBytes(b.size)}
+            </span><br><br>
+            <button
+              class="admin-btn"
+              style="margin-right:6px; padding:8px 14px;"
+              onclick="downloadBackup('${encodeURIComponent(b.file)}')"
+            >
+              Download
+            </button>
+            <button
+              class="admin-btn"
+              style="padding:8px 14px;"
+              onclick="deleteBackupFile('${encodeURIComponent(b.file)}')"
+            >
+              Delete
+            </button>
+          </li>
+        `).join('');
+      } catch (err) {
+        backupList.innerHTML = `<li>${escapeHtml(err.message)}</li>`;
+      }
+    }
+
+    document.getElementById('backup-db-btn').addEventListener('click', async function() {
+      setMessage('backup-db-status', 'Creating backup...', 'green');
+
+      try {
+        const data = await apiFetch('/api/admin/backup-db', {
+          method: 'POST'
+        }, true);
+
+        setMessage(
+          'backup-db-status',
+          `${data.message} File: ${data.file}`,
+          'green'
+        );
+
+        await loadBackups();
+      } catch (err) {
+        setMessage('backup-db-status', err.message, 'red');
+      }
+    });
+
+    document.getElementById('refresh-backups-btn').addEventListener('click', async function() {
+      await loadBackups();
+    });
+
+    window.downloadBackup = function(fileName) {
+      const token = getToken();
+
+      if (!token) {
+        setMessage('backup-db-status', 'Please log in again.', 'red');
+        return;
+      }
+
+      const url = `${API_BASE}/api/admin/backups/${fileName}/download`;
+
+      fetch(url, {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      })
+        .then(async response => {
+          if (response.status === 401) {
+            localStorage.removeItem('jwtToken');
+            showLogin();
+            throw new Error('Your session is invalid or expired. Please log in again.');
+          }
+
+          if (!response.ok) {
+            let errorMessage = 'Download failed.';
+            try {
+              const data = await response.json();
+              errorMessage = data.error || errorMessage;
+            } catch (_) {}
+            throw new Error(errorMessage);
+          }
+
+          return response.blob();
+        })
+        .then(blob => {
+          const decodedName = decodeURIComponent(fileName);
+          const blobUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = decodedName;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(blobUrl);
+          setMessage('backup-db-status', `Downloaded ${decodedName}`, 'green');
+        })
+        .catch(err => {
+          setMessage('backup-db-status', err.message, 'red');
+        });
+    };
+
+    window.deleteBackupFile = async function(fileName) {
+      const decodedName = decodeURIComponent(fileName);
+
+      if (!confirm(`Delete backup "${decodedName}"?`)) return;
+
+      try {
+        await apiFetch(`/api/admin/backups/${fileName}`, {
+          method: 'DELETE'
+        }, true);
+
+        setMessage('backup-db-status', `Deleted ${decodedName}`, 'green');
+        await loadBackups();
+      } catch (err) {
+        setMessage('backup-db-status', err.message, 'red');
+      }
+    };
 
     async function apiFetch(path, options = {}, requiresAuth = false) {
       const headers = {
@@ -585,7 +729,8 @@
       await Promise.all([
         loadAnnouncements(),
         loadEvents(),
-        renderPhoneList()
+        renderPhoneList(),
+        loadBackups()
       ]);
     }
 

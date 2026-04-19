@@ -10,6 +10,12 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+const {
+  backupDatabase,
+  listBackups,
+  getBackupPath,
+  deleteBackup
+} = require('./backup');
 require('dotenv').config();
 
 const { router: authRouter, requireAuth } = require('./auth');
@@ -102,6 +108,73 @@ app.post('/api/admin/backup-db', requireAuth, async (req, res) => {
       file: result.fileName
     });
   } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
+app.post('/api/admin/backup-db', requireAuth, async (req, res) => {
+  try {
+    const result = await backupDatabase();
+    res.json({
+      success: true,
+      message: 'Database backup created successfully.',
+      file: result.fileName
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
+app.get('/api/admin/backups', requireAuth, (req, res) => {
+  try {
+    const backups = listBackups();
+    res.json(backups);
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
+app.get('/api/admin/backups/:fileName/download', requireAuth, (req, res) => {
+  try {
+    const filePath = getBackupPath(req.params.fileName);
+
+    if (!filePath) {
+      return res.status(404).json({
+        success: false,
+        error: 'Backup file not found.'
+      });
+    }
+
+    res.download(filePath, req.params.fileName);
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
+app.delete('/api/admin/backups/:fileName', requireAuth, (req, res) => {
+  try {
+    const result = deleteBackup(req.params.fileName);
+    res.json(result);
+  } catch (err) {
+    if (err.message === 'Backup file not found.') {
+      return res.status(404).json({
+        success: false,
+        error: err.message
+      });
+    }
+
     res.status(500).json({
       success: false,
       error: err.message
