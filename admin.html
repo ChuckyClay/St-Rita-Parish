@@ -129,6 +129,13 @@
           <button id="fetch-readings-btn" class="admin-btn">Fetch Readings Now</button>
           <div id="fetch-readings-status" class="small muted" style="margin-top:10px;"></div>
         </section>
+
+        <section class="card admin-card">
+          <h3 class="admin-title">Database Backup</h3>
+          <p>Create a backup copy of the SQLite database.</p>
+          <button id="backup-db-btn" class="admin-btn">Create Backup</button>
+          <div id="backup-db-status" class="small muted" style="margin-top:10px;"></div>
+        </section>
       </div>
     </section>
   </main>
@@ -188,13 +195,19 @@
         headers['Authorization'] = 'Bearer ' + getToken();
       }
 
-      const response = await fetch(`${API_BASE}${path}`, {
-        ...options,
-        headers
-      });
+      let response;
+      try {
+        response = await fetch(`${API_BASE}${path}`, {
+          ...options,
+          headers
+        });
+      } catch (err) {
+        throw new Error('Network error. Check your internet or backend service.');
+      }
 
       let data = null;
       const contentType = response.headers.get('content-type') || '';
+
       if (contentType.includes('application/json')) {
         data = await response.json();
       } else {
@@ -204,10 +217,18 @@
       if (response.status === 401) {
         localStorage.removeItem('jwtToken');
         showLogin();
-        throw new Error('Session expired. Please log in again.');
+        throw new Error('Your session is invalid or expired. Please log in again.');
+      }
+
+      if (response.status === 429) {
+        throw new Error(data?.error || 'Too many requests. Please wait and try again.');
       }
 
       if (!response.ok) {
+        if (data?.errors && Array.isArray(data.errors)) {
+          throw new Error(data.errors.map(e => e.msg).join(', '));
+        }
+
         throw new Error(data?.error || data?.message || 'Request failed.');
       }
 
@@ -477,6 +498,25 @@
         alert(err.message);
       }
     };
+
+    //BACKUP DATABASE
+    document.getElementById('backup-db-btn').addEventListener('click', async function() {
+      setMessage('backup-db-status', 'Creating backup...', 'green');
+
+      try {
+        const data = await apiFetch('/api/admin/backup-db', {
+          method: 'POST'
+        }, true);
+
+        setMessage(
+          'backup-db-status',
+          data.message + ' File: ' + data.file,
+          'green'
+        );
+      } catch (err) {
+        setMessage('backup-db-status', err.message, 'red');
+      }
+    });
 
     // MESSAGES
     document.getElementById('mess-form').addEventListener('submit', async function(e) {

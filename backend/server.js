@@ -1,7 +1,15 @@
 const express = require('express');
 const cors = require('cors');
+const { backupDatabase } = require('./backup');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many login attempts. Try again after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 require('dotenv').config();
 
 const { router: authRouter, requireAuth } = require('./auth');
@@ -32,11 +40,12 @@ app.use(helmet({
 
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 5,
   standardHeaders: true,
   legacyHeaders: false,
 }));
 
+app.use('/api/auth/login', authLimiter);
 app.use('/api/auth', authRouter);
 
 app.use('/api/phones', (req, res, next) => {
@@ -81,6 +90,22 @@ app.post('/api/fetch-readings', requireAuth, async (req, res) => {
     res.json({ success: true, message: `Readings fetched and stored (${count} readings).` });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/backup-db', requireAuth, async (req, res) => {
+  try {
+    const result = await backupDatabase();
+    res.json({
+      success: true,
+      message: 'Database backup created successfully.',
+      file: result.fileName
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
   }
 });
 
