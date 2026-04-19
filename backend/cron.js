@@ -1,13 +1,12 @@
 // backend/cron.js
-// Schedules daily readings fetch at 1am server time
 
 const cron = require('node-cron');
 const fetchReadings = require('./readings-fetcher');
 
-// Schedule to run every day at 1:00 AM
-cron.schedule('0 1 * * *', () => {
-  console.log('Fetching daily readings...');
-  fetchReadings();
+// Run every 2 hours between 5AM and 1PM
+cron.schedule('0 5,7,9,11,13 * * *', async () => {
+  console.log('[CRON] Attempting to fetch daily readings...');
+  await fetchReadings();
 });
 
-console.log('Daily readings cron job scheduled.');
+console.log('Daily readings cron scheduled.');

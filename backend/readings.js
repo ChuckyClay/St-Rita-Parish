@@ -3,17 +3,27 @@ const { body, validationResult } = require('express-validator');
 const db = require('./db');
 const router = express.Router();
 
-// GET /api/readings - Get today's readings
+function getKenyaDate() {
+  const now = new Date();
+  const kenya = new Date(now.toLocaleString('en-US', { timeZone: 'Africa/Nairobi' }));
+  return kenya.toISOString().split('T')[0];
+}
 
+// GET /api/readings - Get today's readings (Kenya time)
 router.get('/', (req, res) => {
-  const today = new Date().toISOString().split('T')[0];
-  db.all('SELECT * FROM readings WHERE date = ? ORDER BY id ASC', [today], (err, rows) => {
-    if (err) {
-      console.error('DB error:', err);
-      return res.status(500).json({ error: 'Database error.' });
+  const today = getKenyaDate();
+
+  db.all(
+    'SELECT * FROM readings WHERE date = ? ORDER BY id ASC',
+    [today],
+    (err, rows) => {
+      if (err) {
+        console.error('DB error:', err);
+        return res.status(500).json({ error: 'Database error.' });
+      }
+      res.json(rows);
     }
-    res.json(rows);
-  });
+  );
 });
 
 // POST /api/readings - Add a new reading
@@ -29,16 +39,23 @@ router.post(
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+
     const { date, title, content } = req.body;
+
     db.run(
       'INSERT INTO readings (date, title, content) VALUES (?, ?, ?)',
       [date, title, content],
       function (err) {
         if (err) return res.status(500).json({ error: 'Database error.' });
-        db.get('SELECT * FROM readings WHERE id = ?', [this.lastID], (err, row) => {
-          if (err) return res.status(500).json({ error: 'Database error.' });
-          res.status(201).json(row);
-        });
+
+        db.get(
+          'SELECT * FROM readings WHERE id = ?',
+          [this.lastID],
+          (err, row) => {
+            if (err) return res.status(500).json({ error: 'Database error.' });
+            res.status(201).json(row);
+          }
+        );
       }
     );
   }
@@ -46,12 +63,19 @@ router.post(
 
 // DELETE /api/readings/:id - Delete a reading by id
 router.delete('/:id', (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id, 10);
+
+  if (Number.isNaN(id)) {
+    return res.status(400).json({ error: 'Invalid reading id.' });
+  }
+
   db.run('DELETE FROM readings WHERE id = ?', [id], function (err) {
     if (err) return res.status(500).json({ error: 'Database error.' });
+
     if (this.changes === 0) {
       return res.status(404).json({ error: 'Reading not found.' });
     }
+
     res.json({ success: true });
   });
 });

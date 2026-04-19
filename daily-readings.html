@@ -28,37 +28,79 @@
     <section>
       <h2>Daily Readings</h2>
       <div id="daily-readings-full"></div>
-      <p>For the complete readings and audio, visit the <a href="#" id="source-link" target="_blank">official Catholic source</a>.</p>
+      <p>
+        For the complete readings and audio, visit the
+        <a href="#" id="source-link" target="_blank" rel="noopener noreferrer">
+          official Catholic source
+        </a>.
+      </p>
     </section>
   </main>
 
-  <footer class="site-footer">&copy; 2025 St. Rita Parish <br> <i>Designed & Developed by DevTwins Developers</i></footer>
+  <footer class="site-footer">
+    &copy; 2025 St. Rita Parish <br>
+    <i>Designed & Developed by DevTwins Developers</i>
+  </footer>
 
   <script>
+    const API_BASE = 'https://st-rita-parish.onrender.com';
+
+    function formatKenyaDate() {
+      const now = new Date();
+      return now.toLocaleDateString('en-KE', {
+        timeZone: 'Africa/Nairobi',
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     async function loadDailyReadingsFull() {
       const container = document.getElementById('daily-readings-full');
       const sourceLink = document.getElementById('source-link');
+
+      container.innerHTML = '<div class="card"><p>Loading today’s readings...</p></div>';
+      sourceLink.href = 'https://www.catholic.org/bible/daily_reading/';
+
       try {
-        const res = await fetch('https://st-rita-parish.onrender.com/api/readings');
+        const res = await fetch(`${API_BASE}/api/readings`);
         if (!res.ok) throw new Error('Failed to fetch readings');
+
         const readings = await res.json();
-        const today = new Date().toISOString().split('T')[0];
-        const todayReadings = readings.filter(r => r.date && r.date.substring(0, 10) === today);
-        if (todayReadings.length > 0) {
-          container.innerHTML = `<p class="meta">${new Date(today).toLocaleDateString()}</p>` +
-            todayReadings.map(r => `
-              <div class="card">
-                <h3>${r.title}</h3>
-                <p style="white-space: pre-line;">${r.content}</p>
+
+        if (Array.isArray(readings) && readings.length > 0) {
+          container.innerHTML =
+            `<p class="meta">${formatKenyaDate()}</p>` +
+            readings.map(r => `
+              <div class="card" style="margin-bottom:16px;">
+                <h3>${escapeHtml(r.title)}</h3>
+                <p style="white-space: pre-line;">${escapeHtml(r.content)}</p>
               </div>
             `).join('');
         } else {
-          container.innerHTML = `<div class="card"><p>No readings available for today.</p></div>`;
+          container.innerHTML = `
+            <div class="card">
+              <p>No readings available yet for today. Please check again later.</p>
+            </div>
+          `;
         }
-        // Optionally set source link
-        sourceLink.href = 'https://www.catholic.org/bible/daily_reading/';
       } catch (err) {
-        container.innerHTML = `<div class="card"><p>Unable to load daily readings.</p></div>`;
+        container.innerHTML = `
+          <div class="card">
+            <p>Unable to load daily readings at the moment.</p>
+          </div>
+        `;
+        console.error('Daily readings load error:', err);
       }
     }
 
