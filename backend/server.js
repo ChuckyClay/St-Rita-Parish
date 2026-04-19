@@ -15,7 +15,7 @@ const {
   listBackups,
   getBackupPath,
   deleteBackup
-} = require('./backup');
+} = require('./backend/backup');
 require('dotenv').config();
 
 const { router: authRouter, requireAuth } = require('./auth');
