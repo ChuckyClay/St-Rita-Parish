@@ -56,6 +56,16 @@
       });
     }
 
+    function getUsccbTodayLink() {
+      const now = new Date();
+      const kenya = new Date(now.toLocaleString('en-US', { timeZone: 'Africa/Nairobi' }));
+      const yyyy = kenya.getFullYear();
+      const mm = String(kenya.getMonth() + 1).padStart(2, '0');
+      const dd = String(kenya.getDate()).padStart(2, '0');
+
+      return `https://bible.usccb.org/bible/readings/${mm}${dd}${yyyy}.cfm`;
+    }
+
     function escapeHtml(str) {
       return String(str || '')
         .replace(/&/g, '&amp;')
@@ -70,7 +80,7 @@
       const sourceLink = document.getElementById('source-link');
 
       container.innerHTML = '<div class="card"><p>Loading today’s readings...</p></div>';
-      sourceLink.href = 'https://www.catholic.org/bible/daily_reading/';
+      sourceLink.href = getUsccbTodayLink();
 
       try {
         const res = await fetch(`${API_BASE}/api/readings`);

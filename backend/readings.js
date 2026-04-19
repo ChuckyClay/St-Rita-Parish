@@ -14,13 +14,14 @@ router.get('/', (req, res) => {
   const today = getKenyaDate();
 
   db.all(
-    'SELECT * FROM readings WHERE date = ? ORDER BY id ASC',
+    'SELECT id, date, title, content FROM readings WHERE date = ? ORDER BY id ASC',
     [today],
     (err, rows) => {
       if (err) {
         console.error('DB error:', err);
         return res.status(500).json({ error: 'Database error.' });
       }
+
       res.json(rows);
     }
   );
@@ -46,13 +47,20 @@ router.post(
       'INSERT INTO readings (date, title, content) VALUES (?, ?, ?)',
       [date, title, content],
       function (err) {
-        if (err) return res.status(500).json({ error: 'Database error.' });
+        if (err) {
+          console.error('DB insert error:', err);
+          return res.status(500).json({ error: 'Database error.' });
+        }
 
         db.get(
-          'SELECT * FROM readings WHERE id = ?',
+          'SELECT id, date, title, content FROM readings WHERE id = ?',
           [this.lastID],
           (err, row) => {
-            if (err) return res.status(500).json({ error: 'Database error.' });
+            if (err) {
+              console.error('DB fetch inserted row error:', err);
+              return res.status(500).json({ error: 'Database error.' });
+            }
+
             res.status(201).json(row);
           }
         );
@@ -70,7 +78,10 @@ router.delete('/:id', (req, res) => {
   }
 
   db.run('DELETE FROM readings WHERE id = ?', [id], function (err) {
-    if (err) return res.status(500).json({ error: 'Database error.' });
+    if (err) {
+      console.error('DB delete error:', err);
+      return res.status(500).json({ error: 'Database error.' });
+    }
 
     if (this.changes === 0) {
       return res.status(404).json({ error: 'Reading not found.' });
