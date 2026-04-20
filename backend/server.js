@@ -21,6 +21,7 @@ const announcementsRouter = require('./announcements');
 const eventsRouter = require('./events');
 const readingsRouter = require('./readings');
 const fetchAndStoreReadings = require('./readings-fetcher');
+const fetchAndStoreReadingsSw = require('./readings-fetcher-sw');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -113,6 +114,21 @@ app.post('/api/fetch-readings', requireAuth, async (req, res) => {
     res.json({
       success: true,
       message: `Readings fetched and stored (${count} readings).`
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
+app.post('/api/fetch-readings-sw', requireAuth, async (req, res) => {
+  try {
+    const count = await fetchAndStoreReadingsSw();
+    res.json({
+      success: true,
+      message: `Kiswahili readings fetched and stored (${count} readings).`
     });
   } catch (err) {
     res.status(500).json({
