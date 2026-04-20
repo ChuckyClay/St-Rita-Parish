@@ -4,6 +4,7 @@ const db = require('./db');
 
 const USER_AGENT = 'Mozilla/5.0 (compatible; StRitaParishBot/1.0)';
 const SOURCE_NAME = 'Mkatoliki Kiganjani';
+const BASE_URL = 'https://www.mkatolikikiganjani.com/';
 
 function getKenyaNow() {
   return new Date(
@@ -23,6 +24,14 @@ function cleanContent(text) {
     .replace(/\n{3,}/g, '\n\n')
     .replace(/[ \t]{2,}/g, ' ')
     .trim();
+}
+
+function monthNameSw(date) {
+  const names = [
+    'JANUARI', 'FEBRUARI', 'MACHI', 'APRILI', 'MEI', 'JUNI',
+    'JULAI', 'AGOSTI', 'SEPTEMBA', 'OKTOBA', 'NOVEMBA', 'DESEMBA'
+  ];
+  return names[date.getMonth()];
 }
 
 function classifySwSection(title) {
@@ -48,53 +57,55 @@ function readingOrder(type) {
   }[type] || 99;
 }
 
-function monthNameSw(date) {
-  const names = [
-    'JANUARI', 'FEBRUARI', 'MACHI', 'APRILI', 'MEI', 'JUNI',
-    'JULAI', 'AGOSTI', 'SEPTEMBA', 'OKTOBA', 'NOVEMBA', 'DESEMBA'
-  ];
-  return names[date.getMonth()];
+function normalizeUrl(href) {
+  if (!href) return null;
+  if (href.startsWith('http')) return href;
+  return BASE_URL + href.replace(/^\//, '');
 }
 
-function buildSearchPattern(date) {
-  const d = date.getDate();
-  const month = monthNameSw(date);
-  const yyyy = date.getFullYear();
-  return `MASOMO YA MISA, ${month} ${d}, ${yyyy}`;
-}
-
-async function searchTodayPostUrl() {
-  const today = getKenyaNow();
-  const pattern = buildSearchPattern(today);
-
-  const searchUrl = `https://www.mkatolikikiganjani.com/search.php?q=${encodeURIComponent(pattern)}`;
-
-  const res = await fetch(searchUrl, {
+async function fetchHtml(url) {
+  const res = await fetch(url, {
     headers: { 'User-Agent': USER_AGENT }
   });
 
   if (!res.ok) {
-    throw new Error(`Failed to search Kiswahili source: ${res.status}`);
+    throw new Error(`Failed to fetch ${url}: ${res.status}`);
   }
 
-  const html = await res.text();
+  return res.text();
+}
+
+async function findTodayPostUrl() {
+  const today = getKenyaNow();
+  const dateLabel = `APRILI ${today.getDate()} ${today.getFullYear()}`;
+  const html = await fetchHtml(BASE_URL);
   const $ = cheerio.load(html);
 
   let postUrl = null;
 
-  $('a[href*="post.php?id="]').each((_, el) => {
+  // First, try the recent news links
+  $('.latest-news-item').each((_, el) => {
+    const title = cleanContent($(el).find('h6').first().text()).toUpperCase();
     const href = $(el).attr('href');
-    const text = cleanContent($(el).text());
 
-    if (!href) return;
-
-    if (text.toUpperCase().includes('MASOMO YA MISA')) {
-      postUrl = href.startsWith('http')
-        ? href
-        : `https://www.mkatolikikiganjani.com/${href.replace(/^\//, '')}`;
+    if (title.includes('MASOMO YA MISA') && title.includes(dateLabel)) {
+      postUrl = normalizeUrl(href);
       return false;
     }
   });
+
+  // Fallback: any post link on the page matching today's title
+  if (!postUrl) {
+    $('a[href*="post.php?id="]').each((_, el) => {
+      const text = cleanContent($(el).text()).toUpperCase();
+      const href = $(el).attr('href');
+
+      if (text.includes('MASOMO YA MISA') && text.includes(dateLabel)) {
+        postUrl = normalizeUrl(href);
+        return false;
+      }
+    });
+  }
 
   if (!postUrl) {
     throw new Error('No Kiswahili readings post found for today.');
@@ -106,24 +117,33 @@ async function searchTodayPostUrl() {
 function extractReadingsFromSwHtml(html) {
   const $ = cheerio.load(html);
 
-  // Try to work inside the main article
-  const root = $('body');
-
-  const rawText = cleanContent(root.text());
-  if (!rawText) return [];
-
-  const lines = rawText
-    .split('\n')
-    .map(line => cleanContent(line))
-    .filter(Boolean);
+  const article = $('.news-content').first();
+  if (!article.length) {
+    return [];
+  }
 
   const readings = [];
   let current = null;
 
-  for (const line of lines) {
-    const type = classifySwSection(line);
+  article.find('p').each((_, el) => {
+    const paragraphText = cleanContent($(el).text());
+    if (!paragraphText) return;
 
-    if (type !== 'OTHER') {
+    const upper = paragraphText.toUpperCase();
+
+    // Ignore page heading / liturgical week labels
+    if (
+      upper.startsWith('JUMA LA') ||
+      upper.startsWith('MASOMO YA MISA') ||
+      /APR \d{1,2}, \d{4}/i.test(paragraphText)
+    ) {
+      return;
+    }
+
+    const sectionType = classifySwSection(paragraphText);
+
+    // Start a new section
+    if (sectionType !== 'OTHER') {
       if (current && current.content.length > 0) {
         readings.push({
           type: current.type,
@@ -133,41 +153,50 @@ function extractReadingsFromSwHtml(html) {
       }
 
       current = {
-        type,
-        title: line,
+        type: sectionType,
+        title: paragraphText,
         content: []
       };
-      continue;
+      return;
     }
 
-    if (!current) continue;
+    if (!current) return;
 
-    // stop when footer/news/contact noise begins
+    // footer/sidebar noise guard
     if (
-      /HABARI ZA HIVI KARIBUNI|WASILIANA NASI|TUFUATILIE|HABARI MAARUFU|VIPENGELE|HAKI ZOTE ZIMEHIFADHIWA/i.test(line)
+      /HABARI ZA HIVI KARIBUNI|WASILIANA NASI|TUFUATILIE|HABARI MAARUFU|VIPENGELE|HAKI ZOTE ZIMEHIFADHIWA/i.test(upper)
     ) {
-      break;
+      return false;
     }
 
-    // first meaningful line after heading becomes title/citation
+    // first real paragraph after section header is usually citation
+    const isCitation =
+      paragraphText.length < 120 &&
+      /^(MDO\.|ZAB\.|YN\.|LK\.|MT\.|MK\.|YOH\.|KUMBUKUMBU|WAKORINTO|WAFILIPI|WARUMI|ISAYA|YEREMIA|MATENDO)/i.test(paragraphText);
+
     if (
       current.title === 'SOMO 1' ||
       current.title === 'WIMBO WA KATIKATI' ||
       current.title === 'SOMO 2' ||
       current.title === 'SHANGILIO' ||
-      current.title === 'INJILI'
+      current.title === 'INJILI' ||
+      current.title === 'ALELUYA'
     ) {
-      current.title = `${current.title} - ${line}`;
-      continue;
+      if (isCitation || paragraphText.length < 140) {
+        current.title = `${current.title} - ${paragraphText}`;
+        return;
+      }
     }
 
-    // skip boilerplate labels
-    if (/NENO LA BWANA|TUMSHUKURU MUNGU|SIFA KWAKO EE KRISTO/i.test(line)) {
-      continue;
+    // skip liturgical responses / closing formulas
+    if (
+      /NENO LA BWANA|TUMSHUKURU MUNGU|SIFA KWAKO EE KRISTO/i.test(upper)
+    ) {
+      return;
     }
 
-    current.content.push(line);
-  }
+    current.content.push(paragraphText);
+  });
 
   if (current && current.content.length > 0) {
     readings.push({
@@ -177,23 +206,16 @@ function extractReadingsFromSwHtml(html) {
     });
   }
 
-  return readings.sort((a, b) => readingOrder(a.type) - readingOrder(b.type));
+  return readings
+    .filter(r => r.content && r.content.trim().length > 0)
+    .sort((a, b) => readingOrder(a.type) - readingOrder(b.type));
 }
 
 async function fetchAndStoreReadingsSw() {
   try {
     const storeDate = getKenyaDate();
-    const sourceUrl = await searchTodayPostUrl();
-
-    const res = await fetch(sourceUrl, {
-      headers: { 'User-Agent': USER_AGENT }
-    });
-
-    if (!res.ok) {
-      throw new Error(`Failed to fetch Kiswahili post: ${res.status}`);
-    }
-
-    const html = await res.text();
+    const sourceUrl = await findTodayPostUrl();
+    const html = await fetchHtml(sourceUrl);
     const readings = extractReadingsFromSwHtml(html);
 
     if (!Array.isArray(readings) || readings.length === 0) {
