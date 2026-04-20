@@ -9,13 +9,38 @@ function getKenyaDate() {
   return kenya.toISOString().split('T')[0];
 }
 
-// GET /api/readings - today's readings, or latest available as fallback
+function normalizeLang(lang) {
+  const value = String(lang || 'en').trim().toLowerCase();
+  return value === 'sw' ? 'sw' : 'en';
+}
+
+function sectionOrderSql() {
+  return `
+    CASE section_type
+      WHEN 'FIRST' THEN 1
+      WHEN 'PSALM' THEN 2
+      WHEN 'SECOND' THEN 3
+      WHEN 'ALLELUIA' THEN 4
+      WHEN 'GOSPEL' THEN 5
+      ELSE 99
+    END
+  `;
+}
+
+// GET /api/readings?lang=en|sw
+// Returns today's readings for the chosen language, or latest available in that language.
 router.get('/', (req, res) => {
   const today = getKenyaDate();
+  const lang = normalizeLang(req.query.lang);
 
   db.all(
-    'SELECT id, date, title, content FROM readings WHERE date = ? ORDER BY id ASC',
-    [today],
+    `
+    SELECT id, date, lang, section_type, title, content, source_name, source_url, fetched_at
+    FROM readings
+    WHERE date = ? AND lang = ?
+    ORDER BY ${sectionOrderSql()}, id ASC
+    `,
+    [today, lang],
     (err, rows) => {
       if (err) {
         console.error('DB error:', err);
@@ -26,15 +51,17 @@ router.get('/', (req, res) => {
         return res.json(rows);
       }
 
-      // fallback to latest available reading date
       db.all(
         `
-        SELECT id, date, title, content
+        SELECT id, date, lang, section_type, title, content, source_name, source_url, fetched_at
         FROM readings
-        WHERE date = (SELECT MAX(date) FROM readings)
-        ORDER BY id ASC
+        WHERE lang = ?
+          AND date = (
+            SELECT MAX(date) FROM readings WHERE lang = ?
+          )
+        ORDER BY ${sectionOrderSql()}, id ASC
         `,
-        [],
+        [lang, lang],
         (fallbackErr, fallbackRows) => {
           if (fallbackErr) {
             console.error('Fallback DB error:', fallbackErr);
@@ -48,13 +75,17 @@ router.get('/', (req, res) => {
   );
 });
 
-// POST /api/readings - Add a new reading
+// POST /api/readings - manual insert
 router.post(
   '/',
   [
     body('date').isISO8601().withMessage('Date must be ISO8601 format.'),
     body('title').isString().trim().notEmpty().withMessage('Title is required.'),
-    body('content').isString().trim().notEmpty().withMessage('Content is required.')
+    body('content').isString().trim().notEmpty().withMessage('Content is required.'),
+    body('lang').optional().isString().trim(),
+    body('section_type').optional().isString().trim(),
+    body('source_name').optional().isString().trim(),
+    body('source_url').optional().isString().trim()
   ],
   (req, res) => {
     const errors = validationResult(req);
@@ -62,11 +93,22 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { date, title, content } = req.body;
+    const date = req.body.date;
+    const title = req.body.title;
+    const content = req.body.content;
+    const lang = normalizeLang(req.body.lang);
+    const sectionType = String(req.body.section_type || 'OTHER').trim().toUpperCase();
+    const sourceName = req.body.source_name || null;
+    const sourceUrl = req.body.source_url || null;
+    const fetchedAt = new Date().toISOString();
 
     db.run(
-      'INSERT INTO readings (date, title, content) VALUES (?, ?, ?)',
-      [date, title, content],
+      `
+      INSERT INTO readings
+      (date, lang, section_type, title, content, source_name, source_url, fetched_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [date, lang, sectionType, title, content, sourceName, sourceUrl, fetchedAt],
       function (err) {
         if (err) {
           console.error('DB insert error:', err);
@@ -74,7 +116,11 @@ router.post(
         }
 
         db.get(
-          'SELECT id, date, title, content FROM readings WHERE id = ?',
+          `
+          SELECT id, date, lang, section_type, title, content, source_name, source_url, fetched_at
+          FROM readings
+          WHERE id = ?
+          `,
           [this.lastID],
           (fetchErr, row) => {
             if (fetchErr) {
@@ -90,7 +136,7 @@ router.post(
   }
 );
 
-// DELETE /api/readings/:id - Delete a reading by id
+// DELETE /api/readings/:id
 router.delete('/:id', (req, res) => {
   const id = parseInt(req.params.id, 10);
 

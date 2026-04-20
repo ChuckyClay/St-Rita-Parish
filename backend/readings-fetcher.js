@@ -107,11 +107,9 @@ async function fetchAndStoreReadings() {
     const today = getKenyaDate();
     const kenyaNow = getKenyaNow();
 
-    // 1. Try generic daily page first
     let html = await fetchHtml(USCCB_DAILY_URL);
     let { pageDate, readings } = extractReadingsFromUsccbHtml(html);
 
-    // 2. If generic page is not today's page, try exact dated page using 6-digit format
     if (pageDate !== today) {
       const exactUrl = buildUsccbSixDigitUrl(kenyaNow);
       console.log(`[INFO] Generic page date ${pageDate}; trying exact page ${exactUrl}`);
@@ -134,21 +132,42 @@ async function fetchAndStoreReadings() {
       return 0;
     }
 
-    // Store under the page date we actually fetched
     const storeDate = pageDate || today;
+    const fetchedAt = new Date().toISOString();
+    const lang = 'en';
+    const sourceName = 'USCCB';
+    const sourceUrl = USCCB_DAILY_URL;
 
+    // Only replace English rows for that date
     await new Promise((resolve, reject) => {
-      db.run('DELETE FROM readings WHERE date = ?', [storeDate], err => {
-        if (err) reject(err);
-        else resolve();
-      });
+      db.run(
+        'DELETE FROM readings WHERE date = ? AND lang = ?',
+        [storeDate, lang],
+        err => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
     });
 
     for (const reading of readings) {
       await new Promise((resolve, reject) => {
         db.run(
-          'INSERT INTO readings (date, title, content) VALUES (?, ?, ?)',
-          [storeDate, reading.title, reading.content],
+          `
+          INSERT INTO readings
+          (date, lang, section_type, title, content, source_name, source_url, fetched_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          `,
+          [
+            storeDate,
+            lang,
+            reading.type,
+            reading.title,
+            reading.content,
+            sourceName,
+            sourceUrl,
+            fetchedAt
+          ],
           err => {
             if (err) reject(err);
             else resolve();
@@ -157,7 +176,7 @@ async function fetchAndStoreReadings() {
       });
     }
 
-    console.log(`[SUCCESS] Stored ${readings.length} readings for ${storeDate}`);
+    console.log(`[SUCCESS] Stored ${readings.length} English readings for ${storeDate}`);
     return readings.length;
   } catch (err) {
     console.error('[ERROR] Failed to fetch/store USCCB readings:', err);
