@@ -33,6 +33,8 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+app.set('trust proxy', 1); // Trust first proxy for secure cookies if behind a proxy
+
 // Middleware
 app.use(express.json());
 
