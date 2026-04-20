@@ -44,6 +44,15 @@ function readingOrder(type) {
   }[type] || 99;
 }
 
+function isNoise(text) {
+  return /LISTEN PODCAST|VIEW REFLECTION VIDEO|En Español|View Calendar|Get Daily Readings E-mails|Lectionary:|Access Daily Readings|Subscribe/i.test(text);
+}
+
+function looksLikeCitation(text) {
+  return /^[1-3]?\s?[A-Z][A-Za-z\s]+?\s\d+:\d+/.test(text) ||
+         /^[A-Z][A-Za-z\s]+?\s\d+:\d+/.test(text);
+}
+
 async function fetchAndStoreReadings() {
   try {
     const today = getKenyaDate();
@@ -72,36 +81,32 @@ async function fetchAndStoreReadings() {
       let title = heading;
       let content = '';
       let next = $(el).next();
+      let citationCaptured = false;
 
       while (next.length && next[0].tagName !== 'h3') {
         const tag = (next[0].tagName || '').toLowerCase();
-        const text = next.text().trim();
+        const text = cleanContent(next.text().trim());
 
         if (!text) {
           next = next.next();
           continue;
         }
 
-        // Scripture citation sits immediately after headings on USCCB pages
-        if ((tag === 'a' || tag === 'p') && text.length < 120 && !title.includes(' - ')) {
-          if (
-            !/LISTEN PODCAST|VIEW REFLECTION VIDEO|En Español|View Calendar|Get Daily Readings E-mails/i.test(text)
-          ) {
-            title += ` - ${text}`;
-            next = next.next();
-            continue;
-          }
-        }
-
-        // Skip obvious page chrome
-        if (
-          /LISTEN PODCAST|VIEW REFLECTION VIDEO|En Español|View Calendar|Get Daily Readings E-mails|Lectionary:/i.test(text)
-        ) {
+        if (isNoise(text)) {
           next = next.next();
           continue;
         }
 
-        if (['p', 'div'].includes(tag) || text.length > 0) {
+        // Capture citation only once, but keep going for full text
+        if (!citationCaptured && looksLikeCitation(text) && text.length < 120) {
+          title += ` - ${text}`;
+          citationCaptured = true;
+          next = next.next();
+          continue;
+        }
+
+        // Collect real reading content
+        if (['p', 'div', 'blockquote'].includes(tag)) {
           content += text + '\n\n';
         }
 
