@@ -26,6 +26,14 @@ function cleanContent(text) {
     .trim();
 }
 
+function normalizeText(text) {
+  return cleanContent(text)
+    .replace(/\s+/g, ' ')
+    .replace(/\s+,/g, ',')
+    .trim()
+    .toUpperCase();
+}
+
 function monthNameSw(date) {
   const names = [
     'JANUARI', 'FEBRUARI', 'MACHI', 'APRILI', 'MEI', 'JUNI',
@@ -35,7 +43,7 @@ function monthNameSw(date) {
 }
 
 function classifySwSection(title) {
-  const t = String(title || '').trim().toUpperCase();
+  const t = normalizeText(title);
 
   if (t === 'SOMO 1') return 'FIRST';
   if (t === 'WIMBO WA KATIKATI') return 'PSALM';
@@ -75,32 +83,43 @@ async function fetchHtml(url) {
   return res.text();
 }
 
+function titleMatchesToday(title, date) {
+  const t = normalizeText(title);
+  const month = monthNameSw(date);
+  const day = String(date.getDate());
+  const year = String(date.getFullYear());
+
+  return (
+    t.includes('MASOMO YA MISA') &&
+    t.includes(month) &&
+    t.includes(day) &&
+    t.includes(year)
+  );
+}
+
 async function findTodayPostUrl() {
   const today = getKenyaNow();
-  const dateLabel = `APRILI ${today.getDate()} ${today.getFullYear()}`;
   const html = await fetchHtml(BASE_URL);
   const $ = cheerio.load(html);
 
   let postUrl = null;
 
-  // First, try the recent news links
   $('.latest-news-item').each((_, el) => {
-    const title = cleanContent($(el).find('h6').first().text()).toUpperCase();
+    const title = $(el).find('h6').first().text();
     const href = $(el).attr('href');
 
-    if (title.includes('MASOMO YA MISA') && title.includes(dateLabel)) {
+    if (titleMatchesToday(title, today)) {
       postUrl = normalizeUrl(href);
       return false;
     }
   });
 
-  // Fallback: any post link on the page matching today's title
   if (!postUrl) {
     $('a[href*="post.php?id="]').each((_, el) => {
-      const text = cleanContent($(el).text()).toUpperCase();
+      const text = $(el).text();
       const href = $(el).attr('href');
 
-      if (text.includes('MASOMO YA MISA') && text.includes(dateLabel)) {
+      if (titleMatchesToday(text, today)) {
         postUrl = normalizeUrl(href);
         return false;
       }
@@ -111,6 +130,7 @@ async function findTodayPostUrl() {
     throw new Error('No Kiswahili readings post found for today.');
   }
 
+  console.log('[SW] Found post URL:', postUrl);
   return postUrl;
 }
 
@@ -119,6 +139,7 @@ function extractReadingsFromSwHtml(html) {
 
   const article = $('.news-content').first();
   if (!article.length) {
+    console.log('[SW] .news-content not found');
     return [];
   }
 
@@ -129,20 +150,19 @@ function extractReadingsFromSwHtml(html) {
     const paragraphText = cleanContent($(el).text());
     if (!paragraphText) return;
 
-    const upper = paragraphText.toUpperCase();
+    const upper = normalizeText(paragraphText);
 
-    // Ignore page heading / liturgical week labels
+    // Skip heading/date/liturgical-week intro
     if (
       upper.startsWith('JUMA LA') ||
       upper.startsWith('MASOMO YA MISA') ||
-      /APR \d{1,2}, \d{4}/i.test(paragraphText)
+      /^APR \d{1,2}, \d{4}$/i.test(paragraphText)
     ) {
       return;
     }
 
     const sectionType = classifySwSection(paragraphText);
 
-    // Start a new section
     if (sectionType !== 'OTHER') {
       if (current && current.content.length > 0) {
         readings.push({
@@ -154,7 +174,12 @@ function extractReadingsFromSwHtml(html) {
 
       current = {
         type: sectionType,
-        title: paragraphText,
+        title: normalizeText(paragraphText)
+          .replace('WIMBO WA KATIKATI', 'WIMBO WA KATIKATI')
+          .replace('SHANGILIO', 'SHANGILIO')
+          .replace('INJILI', 'INJILI')
+          .replace('SOMO 1', 'SOMO 1')
+          .replace('SOMO 2', 'SOMO 2'),
         content: []
       };
       return;
@@ -162,36 +187,26 @@ function extractReadingsFromSwHtml(html) {
 
     if (!current) return;
 
-    // footer/sidebar noise guard
     if (
       /HABARI ZA HIVI KARIBUNI|WASILIANA NASI|TUFUATILIE|HABARI MAARUFU|VIPENGELE|HAKI ZOTE ZIMEHIFADHIWA/i.test(upper)
     ) {
       return false;
     }
 
-    // first real paragraph after section header is usually citation
     const isCitation =
-      paragraphText.length < 120 &&
-      /^(MDO\.|ZAB\.|YN\.|LK\.|MT\.|MK\.|YOH\.|KUMBUKUMBU|WAKORINTO|WAFILIPI|WARUMI|ISAYA|YEREMIA|MATENDO)/i.test(paragraphText);
+      paragraphText.length < 140 &&
+      /^(MDO\.|ZAB\.|YN\.|LK\.|MT\.|MK\.|YOH\.|MDO|ZAB|YN|LK|MT|MK)/i.test(paragraphText);
 
     if (
-      current.title === 'SOMO 1' ||
-      current.title === 'WIMBO WA KATIKATI' ||
-      current.title === 'SOMO 2' ||
-      current.title === 'SHANGILIO' ||
-      current.title === 'INJILI' ||
-      current.title === 'ALELUYA'
+      ['SOMO 1', 'WIMBO WA KATIKATI', 'SOMO 2', 'SHANGILIO', 'INJILI', 'ALELUYA'].includes(current.title)
     ) {
-      if (isCitation || paragraphText.length < 140) {
-        current.title = `${current.title} - ${paragraphText}`;
+      if (isCitation) {
+        current.title = `${current.title} - ${cleanContent(paragraphText)}`;
         return;
       }
     }
 
-    // skip liturgical responses / closing formulas
-    if (
-      /NENO LA BWANA|TUMSHUKURU MUNGU|SIFA KWAKO EE KRISTO/i.test(upper)
-    ) {
+    if (/NENO LA BWANA|TUMSHUKURU MUNGU|SIFA KWAKO EE KRISTO/i.test(upper)) {
       return;
     }
 
@@ -205,6 +220,8 @@ function extractReadingsFromSwHtml(html) {
       content: cleanContent(current.content.join('\n\n'))
     });
   }
+
+  console.log('[SW] Extracted sections:', readings.map(r => r.title));
 
   return readings
     .filter(r => r.content && r.content.trim().length > 0)
