@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
+require('./cron');
 
 // ✅ Correct backup import (ONLY ONCE, correct path)
 const {
