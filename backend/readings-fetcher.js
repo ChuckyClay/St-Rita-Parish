@@ -3,18 +3,24 @@ const cheerio = require('cheerio');
 const db = require('./db');
 
 function getKenyaNow() {
-  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' }));
+  return new Date(
+    new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })
+  );
 }
 
 function getKenyaDate() {
   return getKenyaNow().toISOString().split('T')[0];
 }
 
-function getUsccbTodayUrl() {
-  const kenya = getKenyaNow();
-  const yyyy = kenya.getFullYear();
-  const mm = String(kenya.getMonth() + 1).padStart(2, '0');
-  const dd = String(kenya.getDate()).padStart(2, '0');
+function getUsccbDateParts(date) {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return { yyyy, mm, dd };
+}
+
+function buildUsccbUrl(date) {
+  const { yyyy, mm, dd } = getUsccbDateParts(date);
   return `https://bible.usccb.org/bible/readings/${mm}${dd}${yyyy}.cfm`;
 }
 
@@ -28,10 +34,13 @@ function cleanContent(text) {
 }
 
 function classifyReadingTitle(title) {
-  if (/Reading\s*I|Reading\s*1|First Reading/i.test(title)) return 'FIRST';
-  if (/Responsorial Psalm|Psalm/i.test(title)) return 'PSALM';
-  if (/Reading\s*II|Reading\s*2|Second Reading/i.test(title)) return 'SECOND';
-  if (/Gospel/i.test(title)) return 'GOSPEL';
+  const t = String(title || '').trim();
+
+  if (/Reading\s*I|Reading\s*1|First Reading/i.test(t)) return 'FIRST';
+  if (/Responsorial Psalm|Psalm/i.test(t)) return 'PSALM';
+  if (/Reading\s*II|Reading\s*2|Second Reading/i.test(t)) return 'SECOND';
+  if (/Gospel/i.test(t)) return 'GOSPEL';
+
   return 'OTHER';
 }
 
@@ -45,85 +54,161 @@ function readingOrder(type) {
   }[type] || 99;
 }
 
-async function fetchAndStoreReadings() {
-  try {
-    const today = getKenyaDate();
-    const pageUrl = getUsccbTodayUrl();
+async function fetchUsccbPageWithFallback() {
+  const kenyaNow = getKenyaNow();
 
-    const res = await fetch(pageUrl, {
+  const todayUrl = buildUsccbUrl(kenyaNow);
+  let res = await fetch(todayUrl, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; StRitaParishBot/1.0)'
+    }
+  });
+
+  if (res.status === 404) {
+    console.log('[INFO] Today page not available yet, trying yesterday...');
+
+    const yesterday = new Date(kenyaNow);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const fallbackUrl = buildUsccbUrl(yesterday);
+    res = await fetch(fallbackUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; StRitaParishBot/1.0)'
       }
     });
 
     if (!res.ok) {
-      throw new Error(`Failed to fetch USCCB page: ${res.status}`);
+      throw new Error(`Fallback fetch failed: ${res.status}`);
     }
 
-    const html = await res.text();
+    return {
+      html: await res.text(),
+      sourceUrl: fallbackUrl
+    };
+  }
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch USCCB page: ${res.status}`);
+  }
+
+  return {
+    html: await res.text(),
+    sourceUrl: todayUrl
+  };
+}
+
+function extractReadingsFromPage($) {
+  const readings = [];
+
+  $('h2, h3, h4').each((_, el) => {
+    const heading = $(el).text().trim();
+    const type = classifyReadingTitle(heading);
+
+    if (type === 'OTHER') return;
+
+    let title = heading;
+    let content = '';
+    let next = $(el).next();
+
+    while (next.length && !/^h2|h3|h4$/i.test(next[0].tagName || '')) {
+      const tag = (next[0].tagName || '').toLowerCase();
+      const text = next.text().trim();
+
+      if (!text) {
+        next = next.next();
+        continue;
+      }
+
+      // Short citation block, append to title
+      if ((tag === 'h4' || tag === 'h5' || tag === 'strong') && text.length < 120) {
+        if (!title.includes(' - ') && !/Reading\s*I|Reading\s*II|Psalm|Gospel/i.test(text)) {
+          title += ` - ${text}`;
+        }
+        next = next.next();
+        continue;
+      }
+
+      // Skip obvious junk
+      if (
+        /Listen to Podcasts|View Calendar|En Español|Daily Readings|Get Daily Readings E-mails|Reading for the date|Back to Daily Readings/i.test(text)
+      ) {
+        next = next.next();
+        continue;
+      }
+
+      if (['p', 'div', 'blockquote'].includes(tag)) {
+        content += cleanContent(text) + '\n\n';
+      }
+
+      next = next.next();
+    }
+
+    content = cleanContent(content);
+
+    if (content) {
+      readings.push({ type, title, content });
+    }
+  });
+
+  return readings;
+}
+
+function fallbackExtractReadings($) {
+  const readings = [];
+
+  $('p, div').each((_, el) => {
+    const text = $(el).text().trim();
+    if (!text) return;
+
+    if (/Reading\s*I|Reading\s*1|First Reading/i.test(text)) {
+      readings.push({ type: 'FIRST', title: text, content: '' });
+      return;
+    }
+
+    if (/Responsorial Psalm|Psalm/i.test(text)) {
+      readings.push({ type: 'PSALM', title: text, content: '' });
+      return;
+    }
+
+    if (/Reading\s*II|Reading\s*2|Second Reading/i.test(text)) {
+      readings.push({ type: 'SECOND', title: text, content: '' });
+      return;
+    }
+
+    if (/Gospel/i.test(text)) {
+      readings.push({ type: 'GOSPEL', title: text, content: '' });
+      return;
+    }
+
+    if (readings.length > 0) {
+      if (
+        !/Listen to Podcasts|View Calendar|En Español|Get Daily Readings E-mails|Back to Daily Readings/i.test(text)
+      ) {
+        readings[readings.length - 1].content += cleanContent(text) + '\n\n';
+      }
+    }
+  });
+
+  return readings.map(r => ({
+    ...r,
+    content: cleanContent(r.content)
+  }));
+}
+
+async function fetchAndStoreReadings() {
+  try {
+    const today = getKenyaDate();
+
+    const { html, sourceUrl } = await fetchUsccbPageWithFallback();
+    console.log(`[INFO] Using USCCB page: ${sourceUrl}`);
+
     const $ = cheerio.load(html);
 
-    const readings = [];
+    let readings = extractReadingsFromPage($);
 
-    // Look for section headings
-    $('h2, h3, h4').each((_, el) => {
-      const heading = $(el).text().trim();
-      const type = classifyReadingTitle(heading);
-
-      if (type === 'OTHER') return;
-
-      let title = heading;
-      let content = '';
-      let next = $(el).next();
-
-      while (next.length && !/^h2|h3|h4$/i.test(next[0].tagName || '')) {
-        const text = next.text().trim();
-
-        if (text) {
-          // Keep scripture citation as part of title if it looks short
-          if ((next[0].tagName === 'h4' || next[0].tagName === 'h5') && text.length < 120) {
-            title += ` - ${text}`;
-          } else {
-            // Skip obvious page junk
-            if (!/Listen to Podcasts|View Calendar|En Español|Daily Readings|Get Daily Readings E-mails/i.test(text)) {
-              content += text + '\n\n';
-            }
-          }
-        }
-
-        next = next.next();
-      }
-
-      content = cleanContent(content);
-
-      if (content) {
-        readings.push({ type, title, content });
-      }
-    });
-
-    // Fallback parsing if heading-based extraction fails
-    if (readings.length === 0) {
-      $('.content-body p, .content-body div, article p, article div').each((_, el) => {
-        const text = $(el).text().trim();
-        if (!text) return;
-
-        if (/Reading\s*I|Reading\s*II|Responsorial Psalm|Gospel/i.test(text)) {
-          const type = classifyReadingTitle(text);
-          readings.push({
-            type,
-            title: text,
-            content: ''
-          });
-        } else if (readings.length > 0) {
-          if (!/Listen to Podcasts|View Calendar|En Español|Get Daily Readings E-mails/i.test(text)) {
-            readings[readings.length - 1].content += cleanContent(text) + '\n\n';
-          }
-        }
-      });
-
-      for (const r of readings) {
-        r.content = cleanContent(r.content);
-      }
+    if (!Array.isArray(readings) || readings.length === 0) {
+      console.log('[WARN] Primary extraction failed, trying fallback extraction...');
+      readings = fallbackExtractReadings($);
     }
 
     const filtered = readings
@@ -155,7 +240,7 @@ async function fetchAndStoreReadings() {
       });
     }
 
-    console.log(`[SUCCESS] Stored ${filtered.length} USCCB readings for ${today}`);
+    console.log(`[SUCCESS] Stored ${filtered.length} readings for ${today}`);
     return filtered.length;
   } catch (err) {
     console.error('[ERROR] Failed to fetch/store USCCB readings:', err);
