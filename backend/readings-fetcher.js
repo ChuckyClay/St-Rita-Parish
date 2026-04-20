@@ -58,6 +58,12 @@ function looksLikeCitation(text) {
   );
 }
 
+function getNodeText($, node) {
+  if (!node) return '';
+  if (node.type === 'text') return cleanContent(node.data || '');
+  return cleanContent($(node).text());
+}
+
 async function fetchAndStoreReadings() {
   try {
     const today = getKenyaDate();
@@ -78,36 +84,41 @@ async function fetchAndStoreReadings() {
     const readings = [];
 
     $('h3').each((_, el) => {
-      const heading = $(el).text().trim();
+      const heading = cleanContent($(el).text());
       const type = classifyReadingTitle(heading);
 
       if (type === 'OTHER') return;
 
       let title = heading;
-      let contentParts = [];
+      const contentParts = [];
+      let citationCaptured = false;
 
-      let next = $(el).next();
+      let node = el.nextSibling;
 
-      while (next.length && (next[0].tagName || '').toLowerCase() !== 'h3') {
-        const text = cleanContent(next.text());
-
-        if (!text || isNoise(text)) {
-          next = next.next();
-          continue;
+      while (node) {
+        if (node.type === 'tag' && node.tagName && node.tagName.toLowerCase() === 'h3') {
+          break;
         }
 
-        // First short line after heading is usually the citation
-        if (!title.includes(' - ') && looksLikeCitation(text) && text.length < 140) {
-          title += ` - ${text}`;
-          next = next.next();
-          continue;
+        const text = getNodeText($, node);
+
+        if (text && !isNoise(text)) {
+          if (!citationCaptured && looksLikeCitation(text) && text.length < 140) {
+            title += ` - ${text}`;
+            citationCaptured = true;
+          } else {
+            contentParts.push(text);
+          }
         }
 
-        contentParts.push(text);
-        next = next.next();
+        node = node.nextSibling;
       }
 
-      const content = cleanContent(contentParts.join('\n\n'));
+      const content = cleanContent(
+        contentParts
+          .join('\n\n')
+          .replace(/\nR\.\s/g, '\nR. ')
+      );
 
       if (content) {
         readings.push({ type, title, content });
