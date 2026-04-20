@@ -9,7 +9,7 @@ function getKenyaDate() {
   return kenya.toISOString().split('T')[0];
 }
 
-// GET /api/readings - Get today's readings (Kenya time)
+// GET /api/readings - today's readings, or latest available as fallback
 router.get('/', (req, res) => {
   const today = getKenyaDate();
 
@@ -22,7 +22,28 @@ router.get('/', (req, res) => {
         return res.status(500).json({ error: 'Database error.' });
       }
 
-      res.json(rows);
+      if (rows && rows.length > 0) {
+        return res.json(rows);
+      }
+
+      // fallback to latest available reading date
+      db.all(
+        `
+        SELECT id, date, title, content
+        FROM readings
+        WHERE date = (SELECT MAX(date) FROM readings)
+        ORDER BY id ASC
+        `,
+        [],
+        (fallbackErr, fallbackRows) => {
+          if (fallbackErr) {
+            console.error('Fallback DB error:', fallbackErr);
+            return res.status(500).json({ error: 'Database error.' });
+          }
+
+          res.json(fallbackRows || []);
+        }
+      );
     }
   );
 });
@@ -55,9 +76,9 @@ router.post(
         db.get(
           'SELECT id, date, title, content FROM readings WHERE id = ?',
           [this.lastID],
-          (err, row) => {
-            if (err) {
-              console.error('DB fetch inserted row error:', err);
+          (fetchErr, row) => {
+            if (fetchErr) {
+              console.error('DB fetch inserted row error:', fetchErr);
               return res.status(500).json({ error: 'Database error.' });
             }
 

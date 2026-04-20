@@ -3,6 +3,7 @@ const cheerio = require('cheerio');
 const db = require('./db');
 
 const USCCB_DAILY_URL = 'https://bible.usccb.org/daily-bible-reading';
+const USER_AGENT = 'Mozilla/5.0 (compatible; StRitaParishBot/1.0)';
 
 function getKenyaNow() {
   return new Date(
@@ -14,8 +15,16 @@ function getKenyaDate() {
   return getKenyaNow().toISOString().split('T')[0];
 }
 
+function buildUsccbSixDigitUrl(date) {
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const yy = String(date.getFullYear()).slice(-2);
+  return `https://bible.usccb.org/bible/readings/${mm}${dd}${yy}.cfm`;
+}
+
 function cleanContent(text) {
   return String(text || '')
+    .replace(/\u00a0/g, ' ')
     .replace(/\r/g, '')
     .replace(/[ \t]+\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
@@ -46,106 +55,100 @@ function readingOrder(type) {
   }[type] || 99;
 }
 
-function isNoise(text) {
-  return /LISTEN PODCAST|VIEW REFLECTION VIDEO|En Español|View Calendar|Get Daily Readings E-mails|Lectionary:|SUBSCRIBE|Terms & Privacy|Dive into God's Word|About USCCB/i.test(text);
+async function fetchHtml(url) {
+  const res = await fetch(url, {
+    headers: { 'User-Agent': USER_AGENT }
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch ${url}: ${res.status}`);
+  }
+
+  return res.text();
 }
 
-function looksLikeCitation(text) {
-  return (
-    /^[1-3]?\s?[A-Z][A-Za-z\s.'-]+\s\d+:\d+/.test(text) ||
-    /^[A-Z][A-Za-z\s.'-]+\s\d+:\d+/.test(text) ||
-    /^Cf\.\s/i.test(text)
-  );
+function extractPageDate($) {
+  const dt = $('.pager li.current time').attr('datetime');
+  return dt ? dt.trim() : null;
 }
 
-function getNodeText($, node) {
-  if (!node) return '';
-  if (node.type === 'text') return cleanContent(node.data || '');
-  return cleanContent($(node).text());
+function extractReadingsFromUsccbHtml(html) {
+  const $ = cheerio.load(html);
+  const pageDate = extractPageDate($);
+
+  const readings = [];
+
+  $('.b-verse').each((_, el) => {
+    const title = cleanContent($(el).find('.content-header h3.name').first().text());
+    const citation = cleanContent($(el).find('.content-header .address a').first().text());
+    const rawContent = cleanContent($(el).find('.content-body p').first().text());
+
+    const type = classifyReadingTitle(title);
+
+    if (type === 'OTHER') return;
+    if (!rawContent) return;
+
+    readings.push({
+      type,
+      title: citation ? `${title} - ${citation}` : title,
+      content: rawContent
+    });
+  });
+
+  const filtered = readings
+    .filter(r => r.content && r.content.trim().length > 0)
+    .sort((a, b) => readingOrder(a.type) - readingOrder(b.type));
+
+  return { pageDate, readings: filtered };
 }
 
 async function fetchAndStoreReadings() {
   try {
     const today = getKenyaDate();
+    const kenyaNow = getKenyaNow();
 
-    const res = await fetch(USCCB_DAILY_URL, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; StRitaParishBot/1.0)'
+    // 1. Try generic daily page first
+    let html = await fetchHtml(USCCB_DAILY_URL);
+    let { pageDate, readings } = extractReadingsFromUsccbHtml(html);
+
+    // 2. If generic page is not today's page, try exact dated page using 6-digit format
+    if (pageDate !== today) {
+      const exactUrl = buildUsccbSixDigitUrl(kenyaNow);
+      console.log(`[INFO] Generic page date ${pageDate}; trying exact page ${exactUrl}`);
+
+      try {
+        html = await fetchHtml(exactUrl);
+        const exactParsed = extractReadingsFromUsccbHtml(html);
+
+        if (exactParsed.readings.length > 0) {
+          pageDate = exactParsed.pageDate || today;
+          readings = exactParsed.readings;
+        }
+      } catch (err) {
+        console.warn(`[WARN] Exact dated page fetch failed: ${err.message}`);
       }
-    });
-
-    if (!res.ok) {
-      throw new Error(`Failed to fetch USCCB page: ${res.status}`);
     }
 
-    const html = await res.text();
-    const $ = cheerio.load(html);
-
-    const readings = [];
-
-    $('h3').each((_, el) => {
-      const heading = cleanContent($(el).text());
-      const type = classifyReadingTitle(heading);
-
-      if (type === 'OTHER') return;
-
-      let title = heading;
-      const contentParts = [];
-      let citationCaptured = false;
-
-      let node = el.nextSibling;
-
-      while (node) {
-        if (node.type === 'tag' && node.tagName && node.tagName.toLowerCase() === 'h3') {
-          break;
-        }
-
-        const text = getNodeText($, node);
-
-        if (text && !isNoise(text)) {
-          if (!citationCaptured && looksLikeCitation(text) && text.length < 140) {
-            title += ` - ${text}`;
-            citationCaptured = true;
-          } else {
-            contentParts.push(text);
-          }
-        }
-
-        node = node.nextSibling;
-      }
-
-      const content = cleanContent(
-        contentParts
-          .join('\n\n')
-          .replace(/\nR\.\s/g, '\nR. ')
-      );
-
-      if (content) {
-        readings.push({ type, title, content });
-      }
-    });
-
-    const filtered = readings
-      .filter(r => r.content && r.content.trim().length > 0)
-      .sort((a, b) => readingOrder(a.type) - readingOrder(b.type));
-
-    if (filtered.length === 0) {
+    if (!Array.isArray(readings) || readings.length === 0) {
       console.log('[WARN] No USCCB readings extracted');
       return 0;
     }
 
+    // Store under the page date we actually fetched
+    const storeDate = pageDate || today;
+
     await new Promise((resolve, reject) => {
-      db.run('DELETE FROM readings WHERE date = ?', [today], err => {
+      db.run('DELETE FROM readings WHERE date = ?', [storeDate], err => {
         if (err) reject(err);
         else resolve();
       });
     });
 
-    for (const reading of filtered) {
+    for (const reading of readings) {
       await new Promise((resolve, reject) => {
         db.run(
           'INSERT INTO readings (date, title, content) VALUES (?, ?, ?)',
-          [today, reading.title, reading.content],
+          [storeDate, reading.title, reading.content],
           err => {
             if (err) reject(err);
             else resolve();
@@ -154,8 +157,8 @@ async function fetchAndStoreReadings() {
       });
     }
 
-    console.log(`[SUCCESS] Stored ${filtered.length} readings for ${today}`);
-    return filtered.length;
+    console.log(`[SUCCESS] Stored ${readings.length} readings for ${storeDate}`);
+    return readings.length;
   } catch (err) {
     console.error('[ERROR] Failed to fetch/store USCCB readings:', err);
     return 0;
