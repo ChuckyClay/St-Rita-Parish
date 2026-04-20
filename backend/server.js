@@ -22,6 +22,7 @@ const readingsRouter = require('./readings');
 const fetchAndStoreReadings = require('./readings-fetcher');
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3001;
 
 // ✅ Rate limiter for login
@@ -32,8 +33,6 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-
-app.set('trust proxy', 1); // Trust first proxy for secure cookies if behind a proxy
 
 // Middleware
 app.use(express.json());

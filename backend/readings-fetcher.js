@@ -29,6 +29,7 @@ function classifyReadingTitle(title) {
   if (/^Reading 1$|^Reading I$|^First Reading$/i.test(t)) return 'FIRST';
   if (/^Responsorial Psalm$|^Psalm$/i.test(t)) return 'PSALM';
   if (/^Reading 2$|^Reading II$|^Second Reading$/i.test(t)) return 'SECOND';
+  if (/^Alleluia$/i.test(t)) return 'ALLELUIA';
   if (/^Gospel$/i.test(t)) return 'GOSPEL';
 
   return 'OTHER';
@@ -39,18 +40,22 @@ function readingOrder(type) {
     FIRST: 1,
     PSALM: 2,
     SECOND: 3,
-    GOSPEL: 4,
-    OTHER: 5
+    ALLELUIA: 4,
+    GOSPEL: 5,
+    OTHER: 99
   }[type] || 99;
 }
 
 function isNoise(text) {
-  return /LISTEN PODCAST|VIEW REFLECTION VIDEO|En Español|View Calendar|Get Daily Readings E-mails|Lectionary:|Access Daily Readings|Subscribe/i.test(text);
+  return /LISTEN PODCAST|VIEW REFLECTION VIDEO|En Español|View Calendar|Get Daily Readings E-mails|Lectionary:|SUBSCRIBE|Terms & Privacy|Dive into God's Word|About USCCB/i.test(text);
 }
 
 function looksLikeCitation(text) {
-  return /^[1-3]?\s?[A-Z][A-Za-z\s]+?\s\d+:\d+/.test(text) ||
-         /^[A-Z][A-Za-z\s]+?\s\d+:\d+/.test(text);
+  return (
+    /^[1-3]?\s?[A-Z][A-Za-z\s.'-]+\s\d+:\d+/.test(text) ||
+    /^[A-Z][A-Za-z\s.'-]+\s\d+:\d+/.test(text) ||
+    /^Cf\.\s/i.test(text)
+  );
 }
 
 async function fetchAndStoreReadings() {
@@ -79,41 +84,30 @@ async function fetchAndStoreReadings() {
       if (type === 'OTHER') return;
 
       let title = heading;
-      let content = '';
+      let contentParts = [];
+
       let next = $(el).next();
-      let citationCaptured = false;
 
-      while (next.length && next[0].tagName !== 'h3') {
-        const tag = (next[0].tagName || '').toLowerCase();
-        const text = cleanContent(next.text().trim());
+      while (next.length && (next[0].tagName || '').toLowerCase() !== 'h3') {
+        const text = cleanContent(next.text());
 
-        if (!text) {
+        if (!text || isNoise(text)) {
           next = next.next();
           continue;
         }
 
-        if (isNoise(text)) {
-          next = next.next();
-          continue;
-        }
-
-        // Capture citation only once, but keep going for full text
-        if (!citationCaptured && looksLikeCitation(text) && text.length < 120) {
+        // First short line after heading is usually the citation
+        if (!title.includes(' - ') && looksLikeCitation(text) && text.length < 140) {
           title += ` - ${text}`;
-          citationCaptured = true;
           next = next.next();
           continue;
         }
 
-        // Collect real reading content
-        if (['p', 'div', 'blockquote'].includes(tag)) {
-          content += text + '\n\n';
-        }
-
+        contentParts.push(text);
         next = next.next();
       }
 
-      content = cleanContent(content);
+      const content = cleanContent(contentParts.join('\n\n'));
 
       if (content) {
         readings.push({ type, title, content });
