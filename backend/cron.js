@@ -2,7 +2,7 @@ const cron = require('node-cron');
 const fetchReadings = require('./readings-fetcher');
 
 // run every 2 minutes
-cron.schedule('*/2 * * * *', async () => {
+cron.schedule('*/5 * * * *', async () => {
   console.log('[CRON] Running hourly fetch...');
   await fetchReadings();
 }, {
