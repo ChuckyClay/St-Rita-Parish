@@ -22,6 +22,7 @@ const eventsRouter = require('./events');
 const readingsRouter = require('./readings');
 const fetchAndStoreReadings = require('./readings-fetcher');
 const fetchAndStoreReadingsSw = require('./readings-fetcher-sw');
+const aiRoutes = require('./ai-routes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -98,6 +99,9 @@ app.use('/api/events', (req, res, next) => {
 
 // Readings
 app.use('/api/readings', readingsRouter);
+
+// AI routes
+app.use('/api/ai', aiRoutes);
 
 // Test route
 app.get('/api/test', (req, res) => res.json({ ok: true }));
