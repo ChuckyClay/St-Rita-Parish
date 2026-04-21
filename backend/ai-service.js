@@ -36,9 +36,7 @@ ${readingText || 'None available.'}
 async function getCatholicChatResponse({ userMessage, parishContext }) {
   const client = getClient();
 
-  if (!client) {
-    throw new Error('NO_GEMINI_API_KEY');
-  }
+  if (!client) throw new Error('NO_GEMINI_API_KEY');
 
   const prompt = `
 You are Rita, a Catholic assistant for St. Rita Parish.
@@ -59,12 +57,35 @@ User question:
 ${userMessage}
 `.trim();
 
-  const response = await client.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: prompt
-  });
+  try {
+    const response = await client.models.generateContent({
+      model: 'gemini-1.5-flash',
+      contents: prompt
+    });
 
-  return response.text || 'Sorry, I could not respond right now.';
+    return response.text || 'Sorry, I could not respond right now.';
+    
+  } catch (err) {
+    console.error('Gemini error:', err);
+
+    // Retry once if it's a 503
+    if (err?.message?.includes('503')) {
+      await new Promise(r => setTimeout(r, 1500));
+
+      try {
+        const retry = await client.models.generateContent({
+          model: 'gemini-1.5-flash',
+          contents: prompt
+        });
+
+        return retry.text || 'Sorry, please try again.';
+      } catch (e) {
+        console.error('Retry failed:', e);
+      }
+    }
+
+    return 'Rita is a bit busy right now. Please try again in a moment.';
+  }
 }
 
 module.exports = {
