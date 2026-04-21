@@ -82,9 +82,22 @@ router.get('/', async (req, res) => {
         const translatedRows = [];
 
         for (const row of englishRows) {
-          const translatedTitle = await translateText(row.title);
-          const translatedContent = await translateText(row.content);
-          const translatedDayTitle = row.day_title ? await translateText(row.day_title) : null;
+          let translatedTitle;
+          let translatedContent;
+          let translatedDayTitle;
+
+          try {
+            translatedTitle = await translateText(row.title);
+            translatedContent = await translateText(row.content);
+            translatedDayTitle = row.day_title ? await translateText(row.day_title) : null;
+          } catch (err) {
+            console.error('[AUTO] Translation failed, falling back to English text:', err.message);
+
+            translatedTitle = row.title;
+            translatedContent = row.content;
+            translatedDayTitle = row.day_title || null;
+          }
+
           const translatedLectionary = row.lectionary || null;
 
           await dbRun(

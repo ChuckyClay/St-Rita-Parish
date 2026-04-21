@@ -4,16 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>About - St. Rita Parish</title>
-  <meta name="description" content="Learn about St. Rita Parish, our history, and our patron saint. Join our vibrant Catholic community." />
-  <meta name="keywords" content="St. Rita Parish, About, Catholic, Church, Community, History" />
-  <meta name="author" content="St. Rita Parish" />
-  <meta property="og:title" content="About - St. Rita Parish" />
-  <meta property="og:description" content="Learn about St. Rita Parish, our history, and our patron saint." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://your-parish-domain.org/about.html" />
-  <meta property="og:image" content="/path-to-your-logo.png" />
-  <link rel="icon" href="/favicon.ico" type="image/x-icon">
-  <link rel="preload" href="styles.css" as="style">
+  <meta name="description" content="Learn about St. Rita Parish, our history, mission, and patron saint." />
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -21,7 +12,7 @@
     <div class="brand">
       <h1>St. Rita Parish</h1>
     </div>
-    <button id="menu-toggle" class="menu-toggle">☰</button>
+    <button id="menu-toggle" class="menu-toggle" aria-label="Toggle navigation menu">☰</button>
     <nav>
       <a href="index.html">Home</a>
       <a href="about.html" class="active">About</a>
@@ -29,35 +20,52 @@
       <a href="groups-ministries.html">Groups & Ministries</a>
       <a href="announcements-events.html">Announcements & Events</a>
       <a href="daily-readings.html">Daily Readings</a>
-        <!-- Gallery link removed -->
       <a href="contact.html">Contact</a>
       <a href="admin.html" target="_blank">Admin</a>
     </nav>
   </header>
 
   <main class="container">
-    <section>
-      <h2>About the Parish</h2>
-      <div class="card">
-        <h3>Parish History</h3>
-        <p>We are a community of believers with Christ as our head. As a parish, we are comprised of seven prayer houses.<br>
-          St Rita Parish serves Nkomo Ward, bordering Kagaene, Kianjai and Ruiri parishes. <a href="parish-history.html">Read more</a>.</p>
-      </div><br>
-      <div class="card">
-        <h3>Patron Saint</h3>
-        <p><b>Saint Rita of Cascia <i>(c. 1381 - 1457)</i></b> is one of the most loved
-          saints in the Catholic Church. She is known as the <b>Saint of the Impossible</b>,
-           the <b>Patroness of hopeless cases</b>, and a powerful intercessor in family and marital struggles. <a href="st-rita-history.html">Read more</a>.</p>
-      </div><br>
-      <div class="card">
-        <h3>Mission and Vision</h3>
-        <p><strong>Mission:</strong> To proclaim the Gospel of Jesus Christ, to celebrate the sacraments, and to serve our community with love and compassion.</p>
-        <p><strong>Vision:</strong> To be a welcoming parish where all are invited to encounter Christ, grow in faith, and participate in the life of the Church.</p>
+    <section class="feature-section fade-up">
+      <div class="section-heading">
+        <h2>About St. Rita Parish</h2>
+        <p>Learn more about our parish story, our patron saint, and our mission as a Catholic community.</p>
+      </div>
+
+      <div class="card-list">
+        <div class="card">
+          <h3>Parish History</h3>
+          <p>
+            We are a community of believers with Christ as our head. As a parish, we are comprised of seven prayer houses.
+            St. Rita Parish serves Nkomo Ward, bordering Kagaene, Kianjai and Ruiri parishes.
+          </p>
+          <a href="parish-history.html" class="btn">Read Parish History</a>
+        </div>
+
+        <div class="card">
+          <h3>Patron Saint</h3>
+          <p>
+            Saint Rita of Cascia is one of the most loved saints in the Catholic Church. She is known as the
+            Saint of the Impossible, the Patroness of hopeless cases, and a powerful intercessor in family and marital struggles.
+          </p>
+          <a href="st-rita-history.html" class="btn">Read About St. Rita</a>
+        </div>
+
+        <div class="card">
+          <h3>Mission and Vision</h3>
+          <p><strong>Mission:</strong> To proclaim the Gospel of Jesus Christ, celebrate the sacraments, and serve our community with love and compassion.</p>
+          <p><strong>Vision:</strong> To be a welcoming parish where all are invited to encounter Christ, grow in faith, and participate in the life of the Church.</p>
+        </div>
       </div>
     </section>
   </main>
 
-  <footer class="site-footer">&copy; 2025 St. Rita Parish <br> <i>Designed & Developed by DevTwins Developers</i></footer>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p>&copy; 2025 St. Rita Parish</p>
+      <p><i>Designed & Developed by DevTwins Developers</i></p>
+    </div>
+  </footer>
 
   <script src="app.js"></script>
 </body>

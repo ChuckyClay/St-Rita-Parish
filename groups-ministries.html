@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Groups & Ministries - St. Rita Parish</title>
+  <meta name="description" content="Explore the parish groups and ministries at St. Rita Parish." />
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -11,7 +12,7 @@
     <div class="brand">
       <h1>St. Rita Parish</h1>
     </div>
-    <button id="menu-toggle" class="menu-toggle">☰</button>
+    <button id="menu-toggle" class="menu-toggle" aria-label="Toggle navigation menu">☰</button>
     <nav>
       <a href="index.html">Home</a>
       <a href="about.html">About</a>
@@ -19,39 +20,54 @@
       <a href="groups-ministries.html" class="active">Groups & Ministries</a>
       <a href="announcements-events.html">Announcements & Events</a>
       <a href="daily-readings.html">Daily Readings</a>
-        <!-- Gallery link removed -->
       <a href="contact.html">Contact</a>
       <a href="admin.html" target="_blank">Admin</a>
     </nav>
   </header>
 
   <main class="container">
-    <section>
-      <h2>Parish Groups & Ministries</h2>
-      <div class="card">
-        <h3>Choirs</h3>
-        <p>Our choirs provide beautiful music for our liturgies. Join us in praising God through song.</p>
-      </div><br>
-      <div class="card">
-        <h3>Youth Group</h3>
-        <p>Engaging activities and faith formation for young people below the age of 25</p>
-      </div><br>
-      <div class="card">
-        <h3>CMA / CWA</h3>
-        <p>Catholic Men's Association (CMA) and Catholic Women's Association (CWA) offer fellowship and service opportunities.</p>
-      </div><br>
-      <div class="card">
-        <h3>Catechism</h3>
-        <p>Catechism Classes for children preparing for the sacraments.</p>
-      </div><br>
-      <div class="card">
-        <h3>Small Christian Communities</h3>
-        <p>Our Small Christian Communities help each other grow spiritualy.</p>
+    <section class="feature-section fade-up">
+      <div class="section-heading">
+        <h2>Parish Groups & Ministries</h2>
+        <p>Faith grows in community. Join one of our parish groups and take part in the life of the Church.</p>
+      </div>
+
+      <div class="card-list">
+        <div class="card">
+          <h3>Choirs</h3>
+          <p>Our choirs provide music for liturgies and help the parish praise God through song.</p>
+        </div>
+
+        <div class="card">
+          <h3>Youth Group</h3>
+          <p>Engaging activities and faith formation for young people below the age of 25.</p>
+        </div>
+
+        <div class="card">
+          <h3>CMA / CWA</h3>
+          <p>Catholic Men’s Association and Catholic Women’s Association offer fellowship, service, and spiritual growth.</p>
+        </div>
+
+        <div class="card">
+          <h3>Catechism</h3>
+          <p>Catechism classes for children preparing for the sacraments and growing in the faith.</p>
+        </div>
+
+        <div class="card">
+          <h3>Small Christian Communities</h3>
+          <p>Our Small Christian Communities help members grow spiritually and support one another in daily life.</p>
+        </div>
       </div>
     </section>
   </main>
 
-  <footer class="site-footer">&copy; 2025 St. Rita Parish <br> <i>Designed & Developed by DevTwins Developers</i></footer>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p>&copy; 2025 St. Rita Parish</p>
+      <p><i>Designed & Developed by DevTwins Developers</i></p>
+    </div>
+  </footer>
+
   <script src="app.js"></script>
 </body>
 </html>

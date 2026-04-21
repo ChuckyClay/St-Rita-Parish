@@ -4,60 +4,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Contact - St. Rita Parish</title>
-  <meta name="description" content="Contact St. Rita Parish for inquiries, prayer requests, or parish information. We are here to help you." />
-  <meta name="keywords" content="St. Rita Parish, Contact, Catholic, Church, Inquiry, Prayer" />
-  <meta name="author" content="St. Rita Parish" />
-  <meta property="og:title" content="Contact - St. Rita Parish" />
-  <meta property="og:description" content="Contact St. Rita Parish for inquiries, prayer requests, or parish information." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://your-parish-domain.org/contact.html" />
-  <meta property="og:image" content="/path-to-your-logo.png" />
-  <link rel="icon" href="/favicon.ico" type="image/x-icon">
-  <link rel="preload" href="styles.css" as="style">
+  <meta name="description" content="Contact St. Rita Parish for inquiries, prayer requests, or parish information." />
   <link rel="stylesheet" href="styles.css">
-  <style>
-    .contact-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-    }
-    .contact-form input, .contact-form textarea {
-      width: 100%;
-      padding: 0.5rem;
-      margin-bottom: 1rem;
-      border: 1px solid #ccc;
-      border-radius: var(--radius);
-    }
-    .contact-form button {
-      background: var(--brand);
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: var(--radius);
-      cursor: pointer;
-    }
-    .contact-form button:hover {
-      background: var(--secondary);
-    }
-    iframe {
-      width: 100%;
-      height: 300px;
-      border: 0;
-      border-radius: var(--radius);
-    }
-    @media (max-width: 800px) {
-      .contact-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
 </head>
 <body>
   <header class="site-header">
     <div class="brand">
       <h1>St. Rita Parish</h1>
     </div>
-    <button id="menu-toggle" class="menu-toggle">☰</button>
+    <button id="menu-toggle" class="menu-toggle" aria-label="Toggle navigation menu">☰</button>
     <nav>
       <a href="index.html">Home</a>
       <a href="about.html">About</a>
@@ -65,15 +20,18 @@
       <a href="groups-ministries.html">Groups & Ministries</a>
       <a href="announcements-events.html">Announcements & Events</a>
       <a href="daily-readings.html">Daily Readings</a>
-        <!-- Gallery link removed -->
       <a href="contact.html" class="active">Contact</a>
       <a href="admin.html" target="_blank">Admin</a>
     </nav>
   </header>
 
   <main class="container">
-    <section>
-      <h2>Contact Us</h2>
+    <section class="feature-section fade-up">
+      <div class="section-heading">
+        <h2>Contact Us</h2>
+        <p>Reach out for inquiries, prayer requests, sacraments, or parish support.</p>
+      </div>
+
       <div class="contact-grid">
         <div>
           <div class="card">
@@ -82,63 +40,83 @@
             <p><strong>Phone:</strong> +254 724 428 772</p>
             <p><strong>Email:</strong> ekithuri@gmail.com</p>
             <p><strong>Office Hours:</strong> Tuesday - Friday, 9:00 AM - 5:00 PM</p>
-          </div><br>
+          </div>
+
           <div class="card">
-            <h3>Send us a Message</h3>
+            <h3>Send Us a Message</h3>
             <form class="contact-form" id="contact-form">
               <label for="name">Name</label>
               <input type="text" id="name" required>
+
               <label for="email">Email</label>
               <input type="email" id="email" required>
+
               <label for="message">Message</label>
               <textarea id="message" rows="5" required></textarea>
+
               <button type="submit">Send Message</button>
               <div id="contact-success" class="small muted" style="margin-top:10px"></div>
             </form>
-          </div><br>
+          </div>
+
           <div class="card">
             <h3>SMS Updates</h3>
             <form class="contact-form" id="sms-form">
-              <label for="sms-phone">Submit your phone number to receive parish updates via SMS:</label>
+              <label for="sms-phone">Submit your phone number to receive parish updates via SMS</label>
               <input type="tel" id="sms-phone" pattern="[0-9]{10,13}" placeholder="e.g. 0712345678" required>
               <button type="submit">Subscribe to SMS</button>
             </form>
             <div id="sms-success" class="small muted" style="margin-top:10px"></div>
           </div>
         </div>
+
         <div class="card">
           <h3>Location</h3>
-          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.1!2d-73.9!3d40.7!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDAuNzAwMDAw!5e0!3m2!1sen!2sus!4v1234567890" allowfullscreen="" loading="lazy"></iframe>
+          <p class="meta">Update this map embed with the real parish location when ready.</p>
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.1!2d-73.9!3d40.7!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDAuNzAwMDAw!5e0!3m2!1sen!2sus!4v1234567890"
+            height="320"
+            allowfullscreen=""
+            loading="lazy">
+          </iframe>
         </div>
       </div>
     </section>
   </main>
 
-  <footer class="site-footer">&copy; 2025 St. Rita Parish <br> <i>Designed & Developed by DevTwins Developers</i></footer>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p>&copy; 2025 St. Rita Parish</p>
+      <p><i>Designed & Developed by DevTwins Developers</i></p>
+    </div>
+  </footer>
 
   <script src="app.js"></script>
   <script>
-    // Integrate contact form with backend
+    const PAGE_API_BASE = 'https://st-rita-parish.onrender.com';
+
     document.getElementById('contact-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = document.getElementById('name').value.trim();
       const email = document.getElementById('email').value.trim();
       const message = document.getElementById('message').value.trim();
       const successDiv = document.getElementById('contact-success');
+
       if (!name || !email || !message) {
         successDiv.textContent = 'Please fill in all fields.';
         successDiv.style.color = 'red';
         return;
       }
+
       try {
-        // Send message to backend
-        const res = await fetch('https://st-rita-parish.onrender.com/api/messages', {
+        const res = await fetch(`${PAGE_API_BASE}/api/messages`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: `[${name} | ${email}] ${message}` })
         });
+
         if (res.ok) {
-          successDiv.textContent = 'Thank you for your message! We will get back to you soon.';
+          successDiv.textContent = 'Thank you for your message. We will get back to you soon.';
           successDiv.style.color = 'green';
           document.getElementById('contact-form').reset();
         } else {
@@ -150,38 +128,42 @@
         successDiv.textContent = 'Unable to send message. Please try again later.';
         successDiv.style.color = 'red';
       }
+
       setTimeout(() => { successDiv.textContent = ''; }, 5000);
     });
 
-    // Integrate SMS form with backend
     document.getElementById('sms-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const phone = document.getElementById('sms-phone').value.trim();
       const smsSuccess = document.getElementById('sms-success');
+
       if (!/^\d{10,13}$/.test(phone)) {
         smsSuccess.textContent = 'Please enter a valid phone number.';
         smsSuccess.style.color = 'red';
         return;
       }
+
       try {
-        const res = await fetch('https://st-rita-parish.onrender.com/api/phones', {
+        const res = await fetch(`${PAGE_API_BASE}/api/phones`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ phone })
         });
+
         if (res.ok) {
-          smsSuccess.textContent = 'You have been subscribed for SMS updates!';
+          smsSuccess.textContent = 'You have been subscribed for SMS updates.';
           smsSuccess.style.color = 'green';
           document.getElementById('sms-form').reset();
         } else {
           const data = await res.json();
-          smsSuccess.textContent = data.error || 'Failed to subscribe.';
+          smsSuccess.textContent = data.error || 'Subscription failed.';
           smsSuccess.style.color = 'red';
         }
       } catch (err) {
-        smsSuccess.textContent = 'Unable to subscribe. Please try again later.';
+        smsSuccess.textContent = 'Unable to subscribe right now. Please try again later.';
         smsSuccess.style.color = 'red';
       }
+
       setTimeout(() => { smsSuccess.textContent = ''; }, 5000);
     });
   </script>

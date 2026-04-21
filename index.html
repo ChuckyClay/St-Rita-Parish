@@ -3,15 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>St. Rita Parish | Catholic Community in [Your Location]</title>
+  <title>St. Rita Parish | Catholic Community</title>
   <meta name="description" content="St. Rita Parish is a vibrant Catholic community dedicated to worship, service, and fellowship. Join us for Mass, sacraments, events, and parish life." />
-  <meta name="keywords" content="St. Rita Parish, Catholic, Church, Mass, Sacraments, Events, Community, [Your Location]" />
+  <meta name="keywords" content="St. Rita Parish, Catholic, Church, Mass, Sacraments, Events, Community" />
   <meta name="author" content="St. Rita Parish" />
   <meta property="og:title" content="St. Rita Parish" />
   <meta property="og:description" content="A vibrant Catholic community dedicated to worship, service, and fellowship." />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://your-parish-domain.org/" />
-  <meta property="og:image" content="/path-to-your-logo.png" />
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link rel="preload" href="styles.css" as="style">
   <link rel="stylesheet" href="styles.css">
@@ -29,74 +27,120 @@
       <a href="groups-ministries.html">Groups & Ministries</a>
       <a href="announcements-events.html">Announcements & Events</a>
       <a href="daily-readings.html">Daily Readings</a>
-        <!-- Gallery link removed -->
       <a href="contact.html">Contact</a>
       <a href="admin.html" target="_blank" aria-label="Admin panel (opens in new tab)">Admin</a>
     </nav>
   </header>
 
   <main class="container" id="main-content" tabindex="-1" aria-label="Main content area">
-    <section class="hero">
-      <h2>Welcome to St. Rita Parish</h2>
-      <p>We are a vibrant Catholic community dedicated to worship, service, and fellowship. Join us in celebrating our faith and building a stronger community.</p>
+    <section class="hero hero-home fade-up">
+      <div class="hero-content">
+        <p class="eyebrow">Catholic Community • Prayer • Fellowship</p>
+        <h2>Welcome to St. Rita Parish</h2>
+        <p class="hero-text">
+          A parish family rooted in worship, service, and hope. Join us for Mass,
+          daily readings, parish events, and a life of faith lived together.
+        </p>
+        <div class="hero-actions">
+          <a href="mass-sacraments.html" class="btn">Mass Times</a>
+          <a href="daily-readings.html" class="btn btn-outline">Daily Readings</a>
+        </div>
+      </div>
     </section>
 
-    <section class="daily-readings">
-      <h2>Daily Readings</h2>
-      <div id="daily-readings-preview" class="card"></div>
+    <section class="quick-info-grid fade-up delay-1">
+      <div class="card quick-card">
+        <h3>Mass Schedule</h3>
+        <p><strong>Sunday:</strong> 9:00 AM, 11:00 AM</p>
+        <p><strong>Weekdays:</strong> Monday - Saturday, 7:00 AM</p>
+      </div>
+      <div class="card quick-card">
+        <h3>Parish Life</h3>
+        <p>Stay connected through ministries, announcements, parish events, and daily worship.</p>
+      </div>
+      <div class="card quick-card">
+        <h3>Daily Readings</h3>
+        <p>Read the Word of God each day in English and Kiswahili.</p>
+      </div>
+    </section>
+
+    <section class="feature-section fade-up delay-2">
+      <div class="section-heading">
+        <h2>Daily Readings</h2>
+        <p>Reflect on today’s liturgy and stay rooted in Scripture.</p>
+      </div>
+      <div id="daily-readings-preview" class="card preview-card"></div>
       <a href="daily-readings.html" class="btn">Read Full Readings</a>
     </section>
 
-    <section class="mass-schedule">
-      <h2>Mass Schedule</h2>
+    <section class="feature-section fade-up delay-2">
+      <div class="section-heading">
+        <h2>Mass Schedule</h2>
+        <p>Join the parish in prayer throughout the week.</p>
+      </div>
       <div class="schedule-grid">
         <div class="card">
           <h3>Sunday Masses</h3>
-          <ul>
+          <ul class="clean-list">
             <li>9:00 AM</li>
             <li>11:00 AM</li>
           </ul>
         </div>
         <div class="card">
           <h3>Weekday Masses</h3>
-          <ul>
+          <ul class="clean-list">
             <li>Monday - Saturday: 7:00 AM</li>
           </ul>
         </div>
       </div>
     </section>
 
-    <section class="announcements-preview">
-      <h2>Latest Announcements</h2>
+    <section class="feature-section fade-up delay-3">
+      <div class="section-heading">
+        <h2>Latest Announcements</h2>
+        <p>Keep up with important parish updates.</p>
+      </div>
       <div id="announcements-preview" class="card-list"></div>
       <a href="announcements-events.html" class="btn">View All Announcements</a>
     </section>
 
-    <section class="events-preview">
-      <h2>Upcoming Events</h2>
+    <section class="feature-section fade-up delay-3">
+      <div class="section-heading">
+        <h2>Upcoming Events</h2>
+        <p>See what’s happening in the parish community.</p>
+      </div>
       <div id="events-preview" class="card-list"></div>
       <a href="announcements-events.html" class="btn">View All Events</a>
     </section>
   </main>
 
   <footer class="site-footer" aria-label="Site footer">
-    &copy; 2025 St. Rita Parish <br> <i>Designed & Developed by DevTwins Developers</i><br>
-    <a href="#" id="privacy-link" style="color:#007bff;text-decoration:underline;">Privacy Policy & Terms</a>
-    <div id="privacy-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
-      <div style="background:#fff;padding:2rem;max-width:500px;margin:auto;border-radius:10px;position:relative;">
-        <button id="close-privacy" style="position:absolute;top:10px;right:10px;">&times;</button>
+    <div class="footer-inner">
+      <p>&copy; 2025 St. Rita Parish</p>
+      <p><i>Designed & Developed by DevTwins Developers</i></p>
+      <a href="#" id="privacy-link" class="footer-link">Privacy Policy & Terms</a>
+    </div>
+
+    <div id="privacy-modal" class="privacy-modal">
+      <div class="privacy-modal-content">
+        <button id="close-privacy" class="close-privacy">&times;</button>
         <h2>Privacy Policy & Terms</h2>
-        <p>Your data (phone numbers, messages) is stored securely and used only for parish communication. We do not share your information with third parties. By submitting your phone number, you consent to receive SMS updates from St. Rita Parish. For questions, contact the parish office.</p>
+        <p>
+          Your data (phone numbers, messages) is stored securely and used only for parish communication.
+          We do not share your information with third parties. By submitting your phone number, you consent
+          to receive SMS updates from St. Rita Parish. For questions, contact the parish office.
+        </p>
       </div>
     </div>
+
     <script>
-    document.getElementById('privacy-link').onclick = function(e) {
-      e.preventDefault();
-      document.getElementById('privacy-modal').style.display = 'flex';
-    };
-    document.getElementById('close-privacy').onclick = function() {
-      document.getElementById('privacy-modal').style.display = 'none';
-    };
+      document.getElementById('privacy-link').onclick = function(e) {
+        e.preventDefault();
+        document.getElementById('privacy-modal').style.display = 'flex';
+      };
+      document.getElementById('close-privacy').onclick = function() {
+        document.getElementById('privacy-modal').style.display = 'none';
+      };
     </script>
   </footer>
 

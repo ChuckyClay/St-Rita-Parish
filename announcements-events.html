@@ -5,15 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Announcements & Events - St. Rita Parish</title>
   <meta name="description" content="Stay updated with the latest announcements and upcoming events at St. Rita Parish." />
-  <meta name="keywords" content="St. Rita Parish, Announcements, Events, News, Catholic" />
-  <meta name="author" content="St. Rita Parish" />
-  <meta property="og:title" content="Announcements & Events - St. Rita Parish" />
-  <meta property="og:description" content="Latest announcements and upcoming events at St. Rita Parish." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://your-parish-domain.org/announcements-events.html" />
-  <meta property="og:image" content="/path-to-your-logo.png" />
-  <link rel="icon" href="/favicon.ico" type="image/x-icon">
-  <link rel="preload" href="styles.css" as="style">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -21,7 +12,7 @@
     <div class="brand">
       <h1>St. Rita Parish</h1>
     </div>
-    <button id="menu-toggle" class="menu-toggle">☰</button>
+    <button id="menu-toggle" class="menu-toggle" aria-label="Toggle navigation menu">☰</button>
     <nav>
       <a href="index.html">Home</a>
       <a href="about.html">About</a>
@@ -29,59 +20,99 @@
       <a href="groups-ministries.html">Groups & Ministries</a>
       <a href="announcements-events.html" class="active">Announcements & Events</a>
       <a href="daily-readings.html">Daily Readings</a>
-        <!-- Gallery link removed -->
       <a href="contact.html">Contact</a>
       <a href="admin.html" target="_blank">Admin</a>
     </nav>
   </header>
 
   <main class="container">
-    <section>
-      <h2>Announcements</h2>
+    <section class="feature-section fade-up">
+      <div class="section-heading">
+        <h2>Announcements</h2>
+        <p>Important parish notices and updates.</p>
+      </div>
       <div id="announcements-full" class="card-list"></div>
     </section>
-    <section>
-      <h2>Events</h2>
+
+    <section class="feature-section fade-up delay-1">
+      <div class="section-heading">
+        <h2>Events</h2>
+        <p>Upcoming moments in parish life and community worship.</p>
+      </div>
       <div id="events-full" class="card-list"></div>
     </section>
   </main>
 
-  <footer class="site-footer">&copy; 2025 St. Rita Parish <br> <i>Designed & Developed by DevTwins Developers</i></footer>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p>&copy; 2025 St. Rita Parish</p>
+      <p><i>Designed & Developed by DevTwins Developers</i></p>
+    </div>
+  </footer>
 
   <script>
-    // Load full announcements
+    const PAGE_API_BASE = 'https://st-rita-parish.onrender.com';
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     async function loadAnnouncementsFull() {
       const container = document.getElementById('announcements-full');
+      container.innerHTML = '<div class="card"><p>Loading announcements...</p></div>';
+
       try {
-        const res = await fetch('https://st-rita-parish.onrender.com/api/announcements');
+        const res = await fetch(`${PAGE_API_BASE}/api/announcements`);
+        if (!res.ok) throw new Error('Failed to fetch announcements');
+
         const announcements = await res.json();
+
+        if (!Array.isArray(announcements) || announcements.length === 0) {
+          container.innerHTML = '<div class="card"><p>No announcements available at the moment.</p></div>';
+          return;
+        }
+
         container.innerHTML = announcements.map(ann => `
           <div class="card">
-            <h4>${ann.title}</h4>
+            <h3>${escapeHtml(ann.title)}</h3>
             <p class="meta">${new Date(ann.date).toLocaleDateString()}</p>
-            <p>${ann.content}</p>
+            <p>${escapeHtml(ann.content)}</p>
           </div>
         `).join('');
       } catch (err) {
-        container.innerHTML = '<p>Unable to load announcements.</p>';
+        container.innerHTML = '<div class="card"><p>Unable to load announcements.</p></div>';
       }
     }
 
-    // Load full events
     async function loadEventsFull() {
       const container = document.getElementById('events-full');
+      container.innerHTML = '<div class="card"><p>Loading events...</p></div>';
+
       try {
-        const res = await fetch('https://st-rita-parish.onrender.com/api/events');
+        const res = await fetch(`${PAGE_API_BASE}/api/events`);
+        if (!res.ok) throw new Error('Failed to fetch events');
+
         const events = await res.json();
+
+        if (!Array.isArray(events) || events.length === 0) {
+          container.innerHTML = '<div class="card"><p>No upcoming events available at the moment.</p></div>';
+          return;
+        }
+
         container.innerHTML = events.map(event => `
-          <div class="card event-card">
-            <h4>${event.title}</h4>
-            <p class="meta">${new Date(event.date).toLocaleDateString()} at ${event.time}</p>
-            <p>${event.description}</p>
+          <div class="card">
+            <h3>${escapeHtml(event.title)}</h3>
+            <p class="meta">${new Date(event.date).toLocaleDateString()} ${event.time ? `• ${escapeHtml(event.time)}` : ''}</p>
+            <p>${escapeHtml(event.description)}</p>
           </div>
         `).join('');
       } catch (err) {
-        container.innerHTML = '<p>Unable to load events.</p>';
+        container.innerHTML = '<div class="card"><p>Unable to load events.</p></div>';
       }
     }
 

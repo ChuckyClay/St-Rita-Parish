@@ -1,90 +1,172 @@
-// Frontend app for St. Rita Parish
+const API_BASE = 'https://st-rita-parish.onrender.com';
 
-// Load announcements preview
-async function loadAnnouncementsPreview() {
-  const container = document.getElementById('announcements-preview');
-  if (!container) return;
-  try {
-    const res = await fetch('https://st-rita-parish.onrender.com/api/announcements');
-    const announcements = await res.json();
-    const recent = announcements.slice(0, 3); // Show latest 3
-    container.innerHTML = recent.map(ann => `
-      <div class="card">
-        <h4>${ann.title}</h4>
-        <p class="meta">${new Date(ann.date).toLocaleDateString()}</p>
-        <p>${ann.content}</p>
-      </div>
-    `).join('');
-  } catch (err) {
-    container.innerHTML = '<p>Unable to load announcements.</p>';
-  }
+/* =========================
+   UTILITIES
+========================= */
+
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
-// Load events preview
-async function loadEventsPreview() {
-  const container = document.getElementById('events-preview');
-  if (!container) return;
-  try {
-    const res = await fetch('https://st-rita-parish.onrender.com/api/events');
-    const events = await res.json();
-    const upcoming = events.slice(0, 3); // Show next 3
-    container.innerHTML = upcoming.map(event => `
-      <div class="card event-card">
-        <h4>${event.title}</h4>
-        <p class="meta">${new Date(event.date).toLocaleDateString()} at ${event.time}</p>
-        <p>${event.description}</p>
-      </div>
-    `).join('');
-  } catch (err) {
-    container.innerHTML = '<p>Unable to load events.</p>';
-  }
+async function fetchJson(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
 }
 
-// Load daily readings preview
+function setLoading(container, text = 'Loading...') {
+  container.innerHTML = `<div class="card"><p>${text}</p></div>`;
+}
+
+function setError(container, text = 'Unable to load data.') {
+  container.innerHTML = `<div class="card"><p>${text}</p></div>`;
+}
+
+function setEmpty(container, text = 'No data available.') {
+  container.innerHTML = `<div class="card"><p>${text}</p></div>`;
+}
+
+/* =========================
+   MOBILE MENU
+========================= */
+
+function initMenuToggle() {
+  const toggle = document.getElementById('menu-toggle');
+  const nav = document.querySelector('.site-header nav');
+
+  if (!toggle || !nav) return;
+
+  toggle.addEventListener('click', () => {
+    nav.classList.toggle('open');
+  });
+
+  // Close when clicking a link (mobile UX)
+  nav.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      nav.classList.remove('open');
+    });
+  });
+}
+
+/* =========================
+   DAILY READINGS PREVIEW (HOME)
+========================= */
 
 async function loadDailyReadingsPreview() {
   const container = document.getElementById('daily-readings-preview');
   if (!container) return;
+
+  setLoading(container, 'Loading today’s readings...');
+
   try {
-    const res = await fetch('https://st-rita-parish.onrender.com/api/readings');
-    if (!res.ok) throw new Error('Failed to fetch readings');
-    const readings = await res.json();
-    const today = new Date().toISOString().split('T')[0];
-    const todayReadings = readings.filter(r => r.date && r.date.substring(0, 10) === today);
-    if (todayReadings.length > 0) {
-      container.innerHTML = `<p class="meta">${new Date(today).toLocaleDateString()}</p>` +
-        todayReadings.slice(0, 3).map(r => `
-          <div class="card">
-            <h4>${r.title}</h4>
-            <p>${r.content.substring(0, 200)}...</p>
-          </div>
-        `).join('');
-    } else {
-      container.innerHTML = `<p>No readings available for today.</p>`;
+    const readings = await fetchJson(`${API_BASE}/api/readings?lang=en`);
+
+    if (!Array.isArray(readings) || readings.length === 0) {
+      setEmpty(container, 'No readings available today.');
+      return;
     }
+
+    const first = readings[0];
+
+    container.innerHTML = `
+      <h3>${escapeHtml(first.day_title || 'Daily Reading')}</h3>
+      ${first.lectionary ? `<p class="meta">${escapeHtml(first.lectionary)}</p>` : ''}
+      <p><strong>${escapeHtml(first.title)}</strong></p>
+      <p class="muted">${escapeHtml(first.content.slice(0, 180))}...</p>
+    `;
   } catch (err) {
-    container.innerHTML = `<p>Unable to load daily readings.</p>`;
+    console.error('Daily readings preview error:', err);
+    setError(container, 'Unable to load daily readings.');
   }
 }
 
-// Initialize home page
-if (document.getElementById('announcements-preview')) {
+/* =========================
+   ANNOUNCEMENTS PREVIEW (HOME)
+========================= */
+
+async function loadAnnouncementsPreview() {
+  const container = document.getElementById('announcements-preview');
+  if (!container) return;
+
+  setLoading(container, 'Loading announcements...');
+
+  try {
+    const announcements = await fetchJson(`${API_BASE}/api/announcements`);
+
+    if (!Array.isArray(announcements) || announcements.length === 0) {
+      setEmpty(container, 'No announcements available.');
+      return;
+    }
+
+    const top = announcements.slice(0, 3);
+
+    container.innerHTML = top.map(a => `
+      <div class="card">
+        <h3>${escapeHtml(a.title)}</h3>
+        <p class="meta">${new Date(a.date).toLocaleDateString()}</p>
+        <p>${escapeHtml(a.content.slice(0, 120))}...</p>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error('Announcements preview error:', err);
+    setError(container, 'Unable to load announcements.');
+  }
+}
+
+/* =========================
+   EVENTS PREVIEW (HOME)
+========================= */
+
+async function loadEventsPreview() {
+  const container = document.getElementById('events-preview');
+  if (!container) return;
+
+  setLoading(container, 'Loading events...');
+
+  try {
+    const events = await fetchJson(`${API_BASE}/api/events`);
+
+    if (!Array.isArray(events) || events.length === 0) {
+      setEmpty(container, 'No upcoming events.');
+      return;
+    }
+
+    const top = events.slice(0, 3);
+
+    container.innerHTML = top.map(e => `
+      <div class="card">
+        <h3>${escapeHtml(e.title)}</h3>
+        <p class="meta">
+          ${new Date(e.date).toLocaleDateString()}
+          ${e.time ? ` • ${escapeHtml(e.time)}` : ''}
+        </p>
+        <p>${escapeHtml(e.description.slice(0, 120))}...</p>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error('Events preview error:', err);
+    setError(container, 'Unable to load events.');
+  }
+}
+
+/* =========================
+   INIT
+========================= */
+
+document.addEventListener('DOMContentLoaded', () => {
+  initMenuToggle();
+  loadDailyReadingsPreview();
   loadAnnouncementsPreview();
   loadEventsPreview();
-  loadDailyReadingsPreview();
-}
+});
 
-// Toggle menu for mobile
-const menuToggle = document.getElementById('menu-toggle');
-const nav = document.querySelector('.site-header nav');
-if (menuToggle && nav) {
-  menuToggle.addEventListener('click', function() {
-    nav.classList.toggle('open');
+window.addEventListener(DOMContentLoaded, () => {
+  document.querySelectorAll('.fade-up').forEach(el => {
+    el.style.animationPlayState = 'running';
   });
-}
-
-document.body.addEventListener("click", (e) => {
-  if (!nav.contains(e.target) && e.target !== menuToggle) {
-    nav.classList.remove('open');
-  }
 });

@@ -4,16 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Mass & Sacraments - St. Rita Parish</title>
-  <meta name="description" content="Mass times and information about sacraments at St. Rita Parish. Join us for worship and spiritual growth." />
-  <meta name="keywords" content="St. Rita Parish, Mass, Sacraments, Worship, Catholic" />
-  <meta name="author" content="St. Rita Parish" />
-  <meta property="og:title" content="Mass & Sacraments - St. Rita Parish" />
-  <meta property="og:description" content="Mass times and information about sacraments at St. Rita Parish." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://your-parish-domain.org/mass-sacraments.html" />
-  <meta property="og:image" content="/path-to-your-logo.png" />
-  <link rel="icon" href="/favicon.ico" type="image/x-icon">
-  <link rel="preload" href="styles.css" as="style">
+  <meta name="description" content="Mass times and information about the sacraments at St. Rita Parish." />
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -21,7 +12,7 @@
     <div class="brand">
       <h1>St. Rita Parish</h1>
     </div>
-    <button id="menu-toggle" class="menu-toggle">☰</button>
+    <button id="menu-toggle" class="menu-toggle" aria-label="Toggle navigation menu">☰</button>
     <nav>
       <a href="index.html">Home</a>
       <a href="about.html">About</a>
@@ -29,44 +20,51 @@
       <a href="groups-ministries.html">Groups & Ministries</a>
       <a href="announcements-events.html">Announcements & Events</a>
       <a href="daily-readings.html">Daily Readings</a>
-        <!-- Gallery link removed -->
       <a href="contact.html">Contact</a>
       <a href="admin.html" target="_blank">Admin</a>
     </nav>
   </header>
 
   <main class="container">
-    <section>
-      <h2>Mass & Sacraments</h2>
-      <div class="card">
-        <h3>Mass Timetable</h3>
-        <p><strong>Sunday Masses:</strong></p>
-        <ul>
-          <li>9:00 AM</li>
-          <li>11:00 AM</li>
-        </ul>
-        <p><strong>Weekday Masses:</strong></p>
-        <ul>
-          <li>Monday - Saturday: 7:00 AM</li>
-        </ul>
-        <p><strong>Holy Days:</strong> As announced</p>
+    <section class="feature-section fade-up">
+      <div class="section-heading">
+        <h2>Mass & Sacraments</h2>
+        <p>Join us in worship and learn more about the sacraments that sustain Christian life.</p>
       </div>
-      <div class="card">
-        <h3>Sacraments Overview</h3>
-        <ul>
-          <li><strong>Baptism:</strong> The sacrament that initiates us into the Christian faith.</li>
-          <li><strong>Eucharist:</strong> The source and summit of Christian life.</li>
-          <li><strong>Confirmation:</strong> Strengthens our faith and commitment to Christ.</li>
-          <li><strong>Penance:</strong> Reconciliation with God through confession.</li>
-          <li><strong>Matrimony:</strong> The sacrament of marriage.</li>
-          <li><strong>Anointing of the Sick:</strong> Brings spiritual and physical healing.</li>
-        </ul>
-        <p>For more information or to arrange a sacrament, please <a href="contact.html">contact</a>  the parish office.</p>
+
+      <div class="card-list">
+        <div class="card">
+          <h3>Mass Timetable</h3>
+          <ul class="clean-list">
+            <li><strong>Sunday Masses:</strong> 9:00 AM, 11:00 AM</li>
+            <li><strong>Weekday Masses:</strong> Monday - Saturday, 7:00 AM</li>
+            <li><strong>Holy Days:</strong> As announced</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Sacraments Overview</h3>
+          <ul class="clean-list">
+            <li><strong>Baptism:</strong> Initiation into the Christian faith.</li>
+            <li><strong>Eucharist:</strong> The source and summit of Christian life.</li>
+            <li><strong>Confirmation:</strong> Strengthens our faith and commitment to Christ.</li>
+            <li><strong>Penance:</strong> Reconciliation with God through confession.</li>
+            <li><strong>Matrimony:</strong> The sacrament of Christian marriage.</li>
+            <li><strong>Anointing of the Sick:</strong> Prayer, healing, and spiritual strength.</li>
+          </ul>
+          <p>For arrangements or more information, please <a href="contact.html">contact the parish office</a>.</p>
+        </div>
       </div>
     </section>
   </main>
 
-  <footer class="site-footer">&copy; 2025 St. Rita Parish <br> <i>Designed & Developed by DevTwins Developers</i></footer>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p>&copy; 2025 St. Rita Parish</p>
+      <p><i>Designed & Developed by DevTwins Developers</i></p>
+    </div>
+  </footer>
+
   <script src="app.js"></script>
 </body>
 </html>
