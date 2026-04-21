@@ -27,27 +27,11 @@ function normalize(text) {
   return clean(text).toUpperCase();
 }
 
-function monthNameSw(date) {
-  const names = [
-    'JANUARI', 'FEBRUARI', 'MACHI', 'APRILI', 'MEI', 'JUNI',
-    'JULAI', 'AGOSTI', 'SEPTEMBA', 'OKTOBA', 'NOVEMBA', 'DESEMBA'
-  ];
-  return names[date.getMonth()];
-}
-
-function weekdayNameSw(date) {
-  const names = [
-    'JUMAPILI', 'JUMATATU', 'JUMANNE', 'JUMATANO',
-    'ALHAMISI', 'IJUMAA', 'JUMAMOSI'
-  ];
-  return names[date.getDay()];
-}
-
 function classify(title) {
   const t = normalize(title);
 
   if (t === 'SOMO LA 1' || t === 'SOMO LA KWANZA' || t === 'SOMO 1') return 'FIRST';
-  if (t.includes('WIMBO WA KATIKATI') || t.includes('ZABURI')) return 'PSALM';
+  if (t.includes('WIMBO WA KATIKATI') || t.includes('ZAB')) return 'PSALM';
   if (t === 'SOMO LA 2' || t === 'SOMO LA PILI' || t === 'SOMO 2') return 'SECOND';
   if (t.includes('SHANGILIO') || t.includes('ALELUYA')) return 'ALLELUIA';
   if (t === 'INJILI') return 'GOSPEL';
@@ -90,26 +74,31 @@ async function findTodayPost() {
   const today = getKenyaNow();
   const day = String(today.getDate());
   const year = String(today.getFullYear());
-  const month = monthNameSw(today); // e.g. APRILI
 
   const html = await fetchHtml(LIST_URL);
   const $ = cheerio.load(html);
 
   let found = null;
 
-  // On this site, the real title link is in the heading inside the listing card
-  $('h2 a, h3 a, h4 a, a[href*="/masomo-ya-misa/"]').each((_, el) => {
-    const text = normalize($(el).text());
-    const href = $(el).attr('href');
+  // Each result block on the listing page has:
+  // ## <a>Title</a>
+  // <date line>
+  $('h2').each((_, el) => {
+    const titleLink = $(el).find('a').first();
+    const titleText = normalize(titleLink.text());
 
-    if (!href) return;
+    if (!titleLink.length) return;
+
+    const blockText = normalize($(el).parent().text());
+    const href = titleLink.attr('href');
 
     if (
-      text.includes(month) &&
-      text.includes(day) &&
-      text.includes(year)
+      titleText.includes('PASAKA') &&
+      blockText.includes('APRILI') &&
+      blockText.includes(day) &&
+      blockText.includes(year)
     ) {
-      found = href.startsWith('http') ? href : `${BASE_URL}${href.startsWith('/') ? '' : '/'}${href}`;
+      found = absoluteUrl(href);
       return false;
     }
   });
@@ -139,7 +128,6 @@ function extract(html) {
     const upper = normalize(line);
     const type = classify(line);
 
-    // start new section
     if (type !== 'OTHER') {
       if (current && current.content.length > 0) {
         readings.push({
@@ -160,7 +148,6 @@ function extract(html) {
 
     if (!current) continue;
 
-    // stop after main content
     if (
       upper.includes('IMEPENDWA') ||
       upper.includes('MAONI') ||
@@ -171,7 +158,6 @@ function extract(html) {
       break;
     }
 
-    // first scripture ref after section header becomes title suffix
     if (
       expectingCitation &&
       line.length < 120 &&
