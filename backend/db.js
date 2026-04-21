@@ -58,10 +58,20 @@ async function ensureReadingsTable() {
     await runAsync(`ALTER TABLE readings ADD COLUMN fetched_at TEXT;`);
   }
 
+  if (!columnNames.has('day_title')) {
+    await runAsync(`ALTER TABLE readings ADD COLUMN day_title TEXT;`);
+  }
+
+  if (!columnNames.has('lectionary')) {
+    await runAsync(`ALTER TABLE readings ADD COLUMN lectionary TEXT;`);
+  }
+
   // Normalize old rows so English keeps working
   await runAsync(`UPDATE readings SET lang = 'en' WHERE lang IS NULL OR TRIM(lang) = '';`);
   await runAsync(`UPDATE readings SET section_type = 'OTHER' WHERE section_type IS NULL OR TRIM(section_type) = '';`);
   await runAsync(`UPDATE readings SET fetched_at = datetime('now') WHERE fetched_at IS NULL OR TRIM(fetched_at) = '';`);
+  await runAsync(`UPDATE readings SET day_title = '' WHERE day_title IS NULL OR TRIM(day_title) = '';`);
+  await runAsync(`UPDATE readings SET lectionary = '' WHERE lectionary IS NULL OR TRIM(lectionary) = '';`);
 
   // Prevent duplicate rows per date/language/section going forward
   await runAsync(`

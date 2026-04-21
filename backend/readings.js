@@ -53,10 +53,9 @@ router.get('/', async (req, res) => {
     const today = getKenyaDate();
     const lang = normalizeLang(req.query.lang);
 
-    // 1. Try today's readings in requested language
     const todayRows = await dbAll(
       `
-      SELECT id, date, lang, section_type, title, content, source_name, source_url, fetched_at
+      SELECT id, date, lang, section_type, title, content, day_title, lectionary, source_name, source_url, fetched_at
       FROM readings
       WHERE date = ? AND lang = ?
       ORDER BY ${sectionOrderSql()}, id ASC
@@ -68,11 +67,10 @@ router.get('/', async (req, res) => {
       return res.json(todayRows);
     }
 
-    // 2. If Kiswahili requested but missing, generate from today's English
     if (lang === 'sw') {
       const englishRows = await dbAll(
         `
-        SELECT id, date, lang, section_type, title, content, source_name, source_url, fetched_at
+        SELECT id, date, lang, section_type, title, content, day_title, lectionary, source_name, source_url, fetched_at
         FROM readings
         WHERE date = ? AND lang = 'en'
         ORDER BY ${sectionOrderSql()}, id ASC
@@ -86,12 +84,14 @@ router.get('/', async (req, res) => {
         for (const row of englishRows) {
           const translatedTitle = await translateText(row.title);
           const translatedContent = await translateText(row.content);
+          const translatedDayTitle = row.day_title ? await translateText(row.day_title) : null;
+          const translatedLectionary = row.lectionary || null;
 
           await dbRun(
             `
             INSERT INTO readings
-            (date, lang, section_type, title, content, source_name, source_url, fetched_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            (date, lang, section_type, title, content, day_title, lectionary, source_name, source_url, fetched_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
             [
               today,
@@ -99,6 +99,8 @@ router.get('/', async (req, res) => {
               row.section_type,
               translatedTitle,
               translatedContent,
+              translatedDayTitle,
+              translatedLectionary,
               'AUTO_TRANSLATED',
               row.source_url,
               new Date().toISOString()
@@ -111,6 +113,8 @@ router.get('/', async (req, res) => {
             lang: 'sw',
             title: translatedTitle,
             content: translatedContent,
+            day_title: translatedDayTitle,
+            lectionary: translatedLectionary,
             source_name: 'AUTO_TRANSLATED'
           });
         }
@@ -120,10 +124,9 @@ router.get('/', async (req, res) => {
       }
     }
 
-    // 3. Fallback to latest available readings in requested language
     const fallbackRows = await dbAll(
       `
-      SELECT id, date, lang, section_type, title, content, source_name, source_url, fetched_at
+      SELECT id, date, lang, section_type, title, content, day_title, lectionary, source_name, source_url, fetched_at
       FROM readings
       WHERE lang = ?
         AND date = (
@@ -150,6 +153,8 @@ router.post(
     body('content').isString().trim().notEmpty().withMessage('Content is required.'),
     body('lang').optional().isString().trim(),
     body('section_type').optional().isString().trim(),
+    body('day_title').optional().isString().trim(),
+    body('lectionary').optional().isString().trim(),
     body('source_name').optional().isString().trim(),
     body('source_url').optional().isString().trim()
   ],
@@ -164,6 +169,8 @@ router.post(
     const content = req.body.content;
     const lang = normalizeLang(req.body.lang);
     const sectionType = String(req.body.section_type || 'OTHER').trim().toUpperCase();
+    const dayTitle = req.body.day_title || null;
+    const lectionary = req.body.lectionary || null;
     const sourceName = req.body.source_name || null;
     const sourceUrl = req.body.source_url || null;
     const fetchedAt = new Date().toISOString();
@@ -171,10 +178,10 @@ router.post(
     db.run(
       `
       INSERT INTO readings
-      (date, lang, section_type, title, content, source_name, source_url, fetched_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      (date, lang, section_type, title, content, day_title, lectionary, source_name, source_url, fetched_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
-      [date, lang, sectionType, title, content, sourceName, sourceUrl, fetchedAt],
+      [date, lang, sectionType, title, content, dayTitle, lectionary, sourceName, sourceUrl, fetchedAt],
       function (err) {
         if (err) {
           console.error('DB insert error:', err);
@@ -183,7 +190,7 @@ router.post(
 
         db.get(
           `
-          SELECT id, date, lang, section_type, title, content, source_name, source_url, fetched_at
+          SELECT id, date, lang, section_type, title, content, day_title, lectionary, source_name, source_url, fetched_at
           FROM readings
           WHERE id = ?
           `,

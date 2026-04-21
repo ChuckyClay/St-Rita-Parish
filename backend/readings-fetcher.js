@@ -72,9 +72,17 @@ function extractPageDate($) {
   return dt ? dt.trim() : null;
 }
 
+function extractPageMeta($) {
+  const dayTitle = cleanContent($('.b-lectionary h2').first().text());
+  const lectionary = cleanContent($('.b-lectionary p').first().text());
+
+  return { dayTitle, lectionary };
+}
+
 function extractReadingsFromUsccbHtml(html) {
   const $ = cheerio.load(html);
   const pageDate = extractPageDate($);
+  const { dayTitle, lectionary } = extractPageMeta($);
 
   const readings = [];
 
@@ -97,7 +105,9 @@ function extractReadingsFromUsccbHtml(html) {
     readings.push({
       type,
       title: citation ? `${title} - ${citation}` : title,
-      content: rawContent
+      content: rawContent,
+      dayTitle,
+      lectionary
     });
   });
 
@@ -144,7 +154,6 @@ async function fetchAndStoreReadings() {
     const sourceName = 'USCCB';
     const sourceUrl = USCCB_DAILY_URL;
 
-    // Only replace English rows for that date
     await new Promise((resolve, reject) => {
       db.run(
         'DELETE FROM readings WHERE date = ? AND lang = ?',
@@ -161,8 +170,8 @@ async function fetchAndStoreReadings() {
         db.run(
           `
           INSERT INTO readings
-          (date, lang, section_type, title, content, source_name, source_url, fetched_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          (date, lang, section_type, title, content, day_title, lectionary, source_name, source_url, fetched_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `,
           [
             storeDate,
@@ -170,6 +179,8 @@ async function fetchAndStoreReadings() {
             reading.type,
             reading.title,
             reading.content,
+            reading.dayTitle,
+            reading.lectionary,
             sourceName,
             sourceUrl,
             fetchedAt

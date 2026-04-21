@@ -79,8 +79,9 @@
       const yyyy = kenya.getFullYear();
       const mm = String(kenya.getMonth() + 1).padStart(2, '0');
       const dd = String(kenya.getDate()).padStart(2, '0');
+      const yy = String(kenya.getFullYear()).slice(-2);
 
-      return `https://bible.usccb.org/bible/readings/${mm}${dd}${yyyy}.cfm`;
+      return `https://bible.usccb.org/bible/readings/${mm}${dd}${yy}.cfm`;
     }
 
     function escapeHtml(str) {
@@ -135,8 +136,18 @@
         const readings = await res.json();
 
         if (Array.isArray(readings) && readings.length > 0) {
+          const first = readings[0];
+          const dayTitle = first?.day_title || '';
+          const lectionary = first?.lectionary || '';
+
           container.innerHTML =
             `<p class="meta">${formatKenyaDate()}</p>` +
+            (dayTitle ? `
+              <div class="card" style="margin-bottom:16px;">
+                <h3>${escapeHtml(dayTitle)}</h3>
+                ${lectionary ? `<p><strong>${escapeHtml(lectionary)}</strong></p>` : ''}
+              </div>
+            ` : '') +
             readings.map(r => `
               <div class="card" style="margin-bottom:16px;">
                 <h3>${escapeHtml(r.title)}</h3>
