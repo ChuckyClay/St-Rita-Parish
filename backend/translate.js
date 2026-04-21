@@ -1,12 +1,13 @@
 const fetch = require('node-fetch');
 
 const MYMEMORY_BASE_URL = 'https://api.mymemory.translated.net/get';
-
-// Put your real email here for higher free limit.
-// If you leave it blank, MyMemory anonymous limit is much lower.
 const CONTACT_EMAIL = 'maverickmarkyu@gmail.com';
 
-async function translateChunk(text) {
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function translateChunk(text, attempt = 1) {
   if (!text || !String(text).trim()) return '';
 
   const url = new URL(MYMEMORY_BASE_URL);
@@ -18,6 +19,16 @@ async function translateChunk(text) {
   }
 
   const res = await fetch(url.toString());
+
+  if (res.status === 429) {
+    if (attempt >= 3) {
+      throw new Error('Translation request failed: 429');
+    }
+
+    await sleep(2000 * attempt);
+    return translateChunk(text, attempt + 1);
+  }
+
   if (!res.ok) {
     throw new Error(`Translation request failed: ${res.status}`);
   }
@@ -61,6 +72,7 @@ async function translateText(text) {
   for (const chunk of chunks) {
     const result = await translateChunk(chunk);
     translated.push(result);
+    await sleep(1200);
   }
 
   return translated.join('\n');
