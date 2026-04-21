@@ -81,8 +81,14 @@ function extractReadingsFromUsccbHtml(html) {
   $('.b-verse').each((_, el) => {
     const title = cleanContent($(el).find('.content-header h3.name').first().text());
     const citation = cleanContent($(el).find('.content-header .address a').first().text());
-    const rawContent = cleanContent($(el).find('.content-body p').first().text());
 
+    const paragraphs = [];
+    $(el).find('.content-body p').each((_, p) => {
+      const text = cleanContent($(p).text());
+      if (text) paragraphs.push(text);
+    });
+
+    const rawContent = cleanContent(paragraphs.join('\n\n'));
     const type = classifyReadingTitle(title);
 
     if (type === 'OTHER') return;
