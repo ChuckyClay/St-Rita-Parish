@@ -578,10 +578,6 @@ hr {
   color: inherit;
 }
 
-.footer-inner p {
-  margin: 6px 0;
-}
-
 .footer-link {
   position: relative;
   color: var(--gold-soft);
