@@ -180,3 +180,68 @@ window.addEventListener('DOMContentLoaded', () => {
     el.style.animationPlayState = 'running';
   });
 });
+
+function appendChatMessage(role, text) {
+  const box = document.getElementById('chatbot-messages');
+  if (!box) return;
+
+  const div = document.createElement('div');
+  div.className = `chatbot-message ${role}`;
+  div.textContent = text;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function initCatholicChatbot() {
+  const toggle = document.getElementById('chatbot-toggle');
+  const panel = document.getElementById('chatbot-panel');
+  const form = document.getElementById('chatbot-form');
+  const input = document.getElementById('chatbot-input');
+
+  if (!toggle || !panel || !form || !input) return;
+
+  toggle.addEventListener('click', () => {
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  });
+
+    // Close on outside click
+  document.addEventListener('click', (e) => {
+    if (panel.style.display === 'block' && !panel.contains(e.target) && !toggle.contains(e.target)) {
+      panel.style.display = 'none';
+    }
+  });
+
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const message = input.value.trim();
+    if (!message) return;
+
+    appendChatMessage('user', message);
+    input.value = '';
+    appendChatMessage('bot', 'Thinking...');
+
+    try {
+      const res = await fetch(`${API_BASE}/api/ai/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+      });
+
+      const data = await res.json();
+
+      const messages = document.getElementById('chatbot-messages');
+      messages.lastElementChild.remove();
+
+      appendChatMessage('bot', data.reply || data.error || 'No response available.');
+    } catch (err) {
+      const messages = document.getElementById('chatbot-messages');
+      messages.lastElementChild.remove();
+      appendChatMessage('bot', 'Sorry, I could not respond right now.');
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initCatholicChatbot();
+});

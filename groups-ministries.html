@@ -66,6 +66,27 @@
     <i>Designed & Developed by DevTwins Developers</i>
   </footer>
 
+  <div id="chatbot-shell" class="chatbot-shell">
+    <button id="chatbot-toggle" class="chatbot-toggle">Ask Rita</button>
+
+    <div id="chatbot-panel" class="chatbot-panel" style="display:none;">
+      <div class="chatbot-header">
+        <strong>Rita</strong>
+      </div>
+
+      <div id="chatbot-messages" class="chatbot-messages">
+        <div class="chatbot-message bot">
+          Welcome. I'm Rita, your Catholic assistant. I can help with Catholic questions and St. Rita Parish information.
+        </div>
+      </div>
+
+      <form id="chatbot-form" class="chatbot-form">
+        <input id="chatbot-input" type="text" placeholder="Ask a Catholic question..." required />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>
