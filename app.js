@@ -51,6 +51,16 @@ function initMenuToggle() {
       nav.classList.remove('open');
     });
   });
+
+  // Close on outside click
+  document.addEventListener('click', (e) => {
+    if (!nav.contains(e.target) && !toggle.contains(e.target)) {
+      nav.classList.remove('open');
+    }
+  });
+
+  // Lock body scroll when menu is open
+  document.body.style.overflow = nav.classList.contains('open') ? 'hidden' : '';
 }
 
 /* =========================
@@ -165,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadEventsPreview();
 });
 
-window.addEventListener(DOMContentLoaded, () => {
+window.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.fade-up').forEach(el => {
     el.style.animationPlayState = 'running';
   });
