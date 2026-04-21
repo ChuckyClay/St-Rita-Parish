@@ -1,6 +1,8 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const db = require('./db');
+const { translateText } = require('./translate');
+
 const router = express.Router();
 
 function getKenyaDate() {
@@ -27,52 +29,116 @@ function sectionOrderSql() {
   `;
 }
 
+function dbAll(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+}
+
+function dbRun(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.run(sql, params, function (err) {
+      if (err) reject(err);
+      else resolve(this);
+    });
+  });
+}
+
 // GET /api/readings?lang=en|sw
-// Returns today's readings for the chosen language, or latest available in that language.
-router.get('/', (req, res) => {
-  const today = getKenyaDate();
-  const lang = normalizeLang(req.query.lang);
+router.get('/', async (req, res) => {
+  try {
+    const today = getKenyaDate();
+    const lang = normalizeLang(req.query.lang);
 
-  db.all(
-    `
-    SELECT id, date, lang, section_type, title, content, source_name, source_url, fetched_at
-    FROM readings
-    WHERE date = ? AND lang = ?
-    ORDER BY ${sectionOrderSql()}, id ASC
-    `,
-    [today, lang],
-    (err, rows) => {
-      if (err) {
-        console.error('DB error:', err);
-        return res.status(500).json({ error: 'Database error.' });
-      }
+    // 1. Try today's readings in requested language
+    const todayRows = await dbAll(
+      `
+      SELECT id, date, lang, section_type, title, content, source_name, source_url, fetched_at
+      FROM readings
+      WHERE date = ? AND lang = ?
+      ORDER BY ${sectionOrderSql()}, id ASC
+      `,
+      [today, lang]
+    );
 
-      if (rows && rows.length > 0) {
-        return res.json(rows);
-      }
+    if (todayRows.length > 0) {
+      return res.json(todayRows);
+    }
 
-      db.all(
+    // 2. If Kiswahili requested but missing, generate from today's English
+    if (lang === 'sw') {
+      const englishRows = await dbAll(
         `
         SELECT id, date, lang, section_type, title, content, source_name, source_url, fetched_at
         FROM readings
-        WHERE lang = ?
-          AND date = (
-            SELECT MAX(date) FROM readings WHERE lang = ?
-          )
+        WHERE date = ? AND lang = 'en'
         ORDER BY ${sectionOrderSql()}, id ASC
         `,
-        [lang, lang],
-        (fallbackErr, fallbackRows) => {
-          if (fallbackErr) {
-            console.error('Fallback DB error:', fallbackErr);
-            return res.status(500).json({ error: 'Database error.' });
-          }
-
-          res.json(fallbackRows || []);
-        }
+        [today]
       );
+
+      if (englishRows.length > 0) {
+        const translatedRows = [];
+
+        for (const row of englishRows) {
+          const translatedTitle = await translateText(row.title);
+          const translatedContent = await translateText(row.content);
+
+          await dbRun(
+            `
+            INSERT INTO readings
+            (date, lang, section_type, title, content, source_name, source_url, fetched_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `,
+            [
+              today,
+              'sw',
+              row.section_type,
+              translatedTitle,
+              translatedContent,
+              'AUTO_TRANSLATED',
+              row.source_url,
+              new Date().toISOString()
+            ]
+          );
+
+          translatedRows.push({
+            ...row,
+            date: today,
+            lang: 'sw',
+            title: translatedTitle,
+            content: translatedContent,
+            source_name: 'AUTO_TRANSLATED'
+          });
+        }
+
+        console.log('[AUTO] Generated Kiswahili readings from English');
+        return res.json(translatedRows);
+      }
     }
-  );
+
+    // 3. Fallback to latest available readings in requested language
+    const fallbackRows = await dbAll(
+      `
+      SELECT id, date, lang, section_type, title, content, source_name, source_url, fetched_at
+      FROM readings
+      WHERE lang = ?
+        AND date = (
+          SELECT MAX(date) FROM readings WHERE lang = ?
+        )
+      ORDER BY ${sectionOrderSql()}, id ASC
+      `,
+      [lang, lang]
+    );
+
+    return res.json(fallbackRows || []);
+  } catch (err) {
+    console.error('Readings route error:', err);
+    return res.status(500).json({ error: 'Database error.' });
+  }
 });
 
 // POST /api/readings - manual insert
