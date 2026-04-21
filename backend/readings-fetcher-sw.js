@@ -3,7 +3,7 @@ const cheerio = require('cheerio');
 const db = require('./db');
 
 const BASE_URL = 'https://mkatolikileo.com';
-const LIST_URL = `${BASE_URL}/masomo-ya-misa/`;
+const LIST_URL = `${BASE_URL}/masomo-ya-misa`;
 
 function getKenyaNow() {
   return new Date(
@@ -17,8 +17,9 @@ function getKenyaDate() {
 
 function clean(text) {
   return String(text || '')
-    .replace(/\s+/g, ' ')
+    .replace(/\u00a0/g, ' ')
     .replace(/\r/g, '')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
@@ -26,14 +27,30 @@ function normalize(text) {
   return clean(text).toUpperCase();
 }
 
+function monthNameSw(date) {
+  const names = [
+    'JANUARI', 'FEBRUARI', 'MACHI', 'APRILI', 'MEI', 'JUNI',
+    'JULAI', 'AGOSTI', 'SEPTEMBA', 'OKTOBA', 'NOVEMBA', 'DESEMBA'
+  ];
+  return names[date.getMonth()];
+}
+
+function weekdayNameSw(date) {
+  const names = [
+    'JUMAPILI', 'JUMATATU', 'JUMANNE', 'JUMATANO',
+    'ALHAMISI', 'IJUMAA', 'JUMAMOSI'
+  ];
+  return names[date.getDay()];
+}
+
 function classify(title) {
   const t = normalize(title);
 
-  if (t.includes('SOMO LA KWANZA')) return 'FIRST';
-  if (t.includes('ZABURI') || t.includes('WIMBO')) return 'PSALM';
-  if (t.includes('SOMO LA PILI')) return 'SECOND';
+  if (t === 'SOMO LA 1' || t === 'SOMO LA KWANZA' || t === 'SOMO 1') return 'FIRST';
+  if (t.includes('WIMBO WA KATIKATI') || t.includes('ZABURI')) return 'PSALM';
+  if (t === 'SOMO LA 2' || t === 'SOMO LA PILI' || t === 'SOMO 2') return 'SECOND';
   if (t.includes('SHANGILIO') || t.includes('ALELUYA')) return 'ALLELUIA';
-  if (t.includes('INJILI')) return 'GOSPEL';
+  if (t === 'INJILI') return 'GOSPEL';
 
   return 'OTHER';
 }
@@ -50,7 +67,11 @@ function order(type) {
 }
 
 async function fetchHtml(url) {
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; StRitaParishBot/1.0)'
+    }
+  });
 
   if (!res.ok) {
     throw new Error(`Failed to fetch ${url}: ${res.status}`);
@@ -59,71 +80,94 @@ async function fetchHtml(url) {
   return res.text();
 }
 
+function absoluteUrl(href) {
+  if (!href) return null;
+  if (href.startsWith('http')) return href;
+  return `${BASE_URL}${href.startsWith('/') ? '' : '/'}${href}`;
+}
+
 async function findTodayPost() {
   const today = getKenyaNow();
-  const day = today.getDate();
-  const year = today.getFullYear();
+  const day = String(today.getDate());
+  const year = String(today.getFullYear());
+  const month = monthNameSw(today);
+  const weekday = weekdayNameSw(today);
 
-  const sources = [
-    `${BASE_URL}/`,              // homepage (MOST reliable)
-    `${BASE_URL}/masomo-ya-misa/` // fallback
-  ];
+  const html = await fetchHtml(LIST_URL);
+  const $ = cheerio.load(html);
 
-  for (const url of sources) {
-    try {
-      const html = await fetchHtml(url);
-      const $ = cheerio.load(html);
+  let found = null;
 
-      let found = null;
+  // The listing page uses links whose visible text can be empty.
+  // So inspect each masomo card/container and read its nearby heading/date text.
+  $('a[href*="/masomo-ya-misa/"]').each((_, el) => {
+    const href = $(el).attr('href');
+    const block = $(el).closest('div, article, li');
+    const nearbyText = normalize(block.text());
 
-      $('a').each((_, el) => {
-        const text = normalize($(el).text());
-        const href = $(el).attr('href');
-
-        if (!href) return;
-
-        if (
-          text.includes('MASOMO') &&
-          text.includes(day.toString()) &&
-          text.includes(year.toString())
-        ) {
-          found = href.startsWith('http') ? href : BASE_URL + href;
-          return false;
-        }
-      });
-
-      if (found) {
-        console.log('[SW] Found from', url, '→', found);
-        return found;
-      }
-
-    } catch (err) {
-      console.log('[SW] Failed source:', url);
+    if (
+      nearbyText.includes(month) &&
+      nearbyText.includes(day) &&
+      nearbyText.includes(year) &&
+      (nearbyText.includes(weekday) || nearbyText.includes('MASOMO'))
+    ) {
+      found = absoluteUrl(href);
+      return false;
     }
+  });
+
+  if (!found) {
+    // Fallback: inspect all headings and find the linked one nearest today's date
+    $('h1, h2, h3, h4, h5, h6').each((_, el) => {
+      const headingText = normalize($(el).text());
+      const parentText = normalize($(el).parent().text());
+      const link = $(el).closest('a[href*="/masomo-ya-misa/"]');
+
+      if (
+        (headingText.includes(month) || parentText.includes(month)) &&
+        (headingText.includes(day) || parentText.includes(day)) &&
+        (headingText.includes(year) || parentText.includes(year)) &&
+        link.length
+      ) {
+        found = absoluteUrl(link.attr('href'));
+        return false;
+      }
+    });
   }
 
-  throw new Error('No Kiswahili post found for today');
+  if (!found) {
+    throw new Error('No Kiswahili post found for today');
+  }
+
+  console.log('[SW] Found:', found);
+  return found;
 }
 
 function extract(html) {
   const $ = cheerio.load(html);
 
-  const content = $('.entry-content, .post-content, article').first();
-
-  if (!content.length) {
-    console.log('[SW] content not found');
+  // Use the full text of the article page and parse by lines.
+  const articleText = clean($('body').text());
+  if (!articleText) {
+    console.log('[SW] article text not found');
     return [];
   }
 
+  const lines = $('body')
+    .text()
+    .split('\n')
+    .map(line => clean(line))
+    .filter(Boolean);
+
   const readings = [];
   let current = null;
+  let expectingCitation = false;
 
-  content.find('p').each((_, el) => {
-    const text = clean($(el).text());
-    if (!text) return;
+  for (const line of lines) {
+    const upper = normalize(line);
+    const type = classify(line);
 
-    const type = classify(text);
-
+    // Start section
     if (type !== 'OTHER') {
       if (current && current.content.length > 0) {
         readings.push({
@@ -135,22 +179,49 @@ function extract(html) {
 
       current = {
         type,
-        title: text,
+        title: line,
         content: []
       };
-      return;
+      expectingCitation = true;
+      continue;
     }
 
-    if (!current) return;
+    if (!current) continue;
 
+    // Stop when comments/footer area starts
     if (
-      /NENO LA BWANA|TUMSHUKURU MUNGU|SIFA KWAKO/i.test(text.toUpperCase())
+      upper.includes('MAONI') ||
+      upper.includes('INGIA UTOE MAONI') ||
+      upper.includes('COPYRIGHT') ||
+      upper.includes('MAISHA YA KIKATOLIKI')
     ) {
-      return;
+      break;
     }
 
-    current.content.push(text);
-  });
+    // First short scripture-looking line after section header becomes title citation
+    if (
+      expectingCitation &&
+      line.length < 120 &&
+      /^(MDO|ZAB|YN|LK|MT|MK|RUM|1KOR|2KOR|EF|FLP|KOL|1THE|2THE|1TIM|2TIM|TIT|FLM|EBR|YAK|1PET|2PET|1YN|2YN|3YN|YUD|UFU)\.?/i.test(line)
+    ) {
+      current.title = `${current.title} - ${line}`;
+      expectingCitation = false;
+      continue;
+    }
+
+    expectingCitation = false;
+
+    // Skip liturgical responses/closings
+    if (
+      upper.includes('NENO LA BWANA') ||
+      upper.includes('TUMSHUKURU MUNGU') ||
+      upper.includes('SIFA KWAKO EE KRISTO')
+    ) {
+      continue;
+    }
+
+    current.content.push(line);
+  }
 
   if (current && current.content.length > 0) {
     readings.push({
@@ -161,7 +232,11 @@ function extract(html) {
   }
 
   return readings
-    .filter(r => r.content.trim().length > 0)
+    .filter(r => clean(r.content).length > 0)
+    .map(r => ({
+      ...r,
+      content: clean(r.content)
+    }))
     .sort((a, b) => order(a.type) - order(b.type));
 }
 
