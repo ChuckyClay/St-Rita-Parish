@@ -53,11 +53,18 @@ router.post('/chat', async (req, res) => {
 
     return res.json({ reply });
   } catch (err) {
-    console.error('AI chat error:', err);
-    return res.status(500).json({
-      error: 'Unable to generate a response right now.'
-    });
-  }
+        console.error('AI chat error:', err);
+
+        if (err.message === 'NO_API_KEY') {
+            return res.json({
+            reply: 'Rita is not configured yet. Please contact the administrator.'
+            });
+        }
+
+        return res.json({
+            reply: 'Sorry, I could not respond right now.'
+        });
+    }
 });
 
 module.exports = router;
