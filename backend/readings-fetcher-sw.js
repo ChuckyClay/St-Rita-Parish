@@ -64,33 +64,45 @@ async function findTodayPost() {
   const day = today.getDate();
   const year = today.getFullYear();
 
-  const html = await fetchHtml(LIST_URL);
-  const $ = cheerio.load(html);
+  const sources = [
+    `${BASE_URL}/`,              // homepage (MOST reliable)
+    `${BASE_URL}/masomo-ya-misa/` // fallback
+  ];
 
-  let url = null;
+  for (const url of sources) {
+    try {
+      const html = await fetchHtml(url);
+      const $ = cheerio.load(html);
 
-  $('a').each((_, el) => {
-    const text = normalize($(el).text());
-    const href = $(el).attr('href');
+      let found = null;
 
-    if (!href) return;
+      $('a').each((_, el) => {
+        const text = normalize($(el).text());
+        const href = $(el).attr('href');
 
-    if (
-      text.includes('MASOMO') &&
-      text.includes(day.toString()) &&
-      text.includes(year.toString())
-    ) {
-      url = href.startsWith('http') ? href : BASE_URL + href;
-      return false;
+        if (!href) return;
+
+        if (
+          text.includes('MASOMO') &&
+          text.includes(day.toString()) &&
+          text.includes(year.toString())
+        ) {
+          found = href.startsWith('http') ? href : BASE_URL + href;
+          return false;
+        }
+      });
+
+      if (found) {
+        console.log('[SW] Found from', url, '→', found);
+        return found;
+      }
+
+    } catch (err) {
+      console.log('[SW] Failed source:', url);
     }
-  });
-
-  if (!url) {
-    throw new Error('No Kiswahili post found for today');
   }
 
-  console.log('[SW] Found:', url);
-  return url;
+  throw new Error('No Kiswahili post found for today');
 }
 
 function extract(html) {
