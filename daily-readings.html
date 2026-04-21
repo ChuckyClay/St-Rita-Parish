@@ -27,12 +27,28 @@
   <main class="container">
     <section>
       <h2>Daily Readings</h2>
+
+      <div style="display:flex; align-items:center; gap:1rem; margin-bottom:0.75rem; flex-wrap:wrap;">
+        <button id="lang-en" class="btn" aria-pressed="true">English</button>
+        <button id="lang-sw" class="btn" aria-pressed="false">Kiswahili</button>
+      </div>
+
+      <div id="language-note" style="margin-bottom: 0.75rem;"></div>
+
       <div id="daily-readings-full"></div>
+
       <p>
-        For the complete readings and audio, visit the
+        For the complete English readings and audio, visit the
         <a href="#" id="source-link" target="_blank" rel="noopener noreferrer">
           official Catholic source
         </a>.
+      </p>
+
+      <p>
+        For original Kiswahili readings when available, you can also visit:
+        <a href="https://mkatolikileo.com/masomo-ya-misa" target="_blank" rel="noopener noreferrer">Mkatoliki Leo</a>
+        and
+        <a href="https://www.mkatolikikiganjani.com/" target="_blank" rel="noopener noreferrer">Mkatoliki Kiganjani</a>.
       </p>
     </section>
   </main>
@@ -44,6 +60,7 @@
 
   <script>
     const API_BASE = 'https://st-rita-parish.onrender.com';
+    let currentLang = 'en';
 
     function formatKenyaDate() {
       const now = new Date();
@@ -75,15 +92,44 @@
         .replace(/'/g, '&#039;');
     }
 
-    async function loadDailyReadingsFull() {
+    function setActiveLanguage(lang) {
+      currentLang = lang;
+
+      const enBtn = document.getElementById('lang-en');
+      const swBtn = document.getElementById('lang-sw');
+      const note = document.getElementById('language-note');
+
+      enBtn.setAttribute('aria-pressed', lang === 'en' ? 'true' : 'false');
+      swBtn.setAttribute('aria-pressed', lang === 'sw' ? 'true' : 'false');
+
+      enBtn.style.opacity = lang === 'en' ? '1' : '0.75';
+      swBtn.style.opacity = lang === 'sw' ? '1' : '0.75';
+
+      if (lang === 'sw') {
+        note.innerHTML = `
+          <div class="card" style="padding:12px;">
+            <p style="margin:0;">
+              <strong>Kiswahili (translated)</strong> — This version is currently generated from the English readings.
+              For original Kiswahili readings, use the links below.
+            </p>
+          </div>
+        `;
+      } else {
+        note.innerHTML = '';
+      }
+    }
+
+    async function loadDailyReadingsFull(lang = 'en') {
       const container = document.getElementById('daily-readings-full');
       const sourceLink = document.getElementById('source-link');
+
+      setActiveLanguage(lang);
 
       container.innerHTML = '<div class="card"><p>Loading today’s readings...</p></div>';
       sourceLink.href = getUsccbTodayLink();
 
       try {
-        const res = await fetch(`${API_BASE}/api/readings`);
+        const res = await fetch(`${API_BASE}/api/readings?lang=${encodeURIComponent(lang)}`);
         if (!res.ok) throw new Error('Failed to fetch readings');
 
         const readings = await res.json();
@@ -114,7 +160,15 @@
       }
     }
 
-    loadDailyReadingsFull();
+    document.getElementById('lang-en').addEventListener('click', () => {
+      loadDailyReadingsFull('en');
+    });
+
+    document.getElementById('lang-sw').addEventListener('click', () => {
+      loadDailyReadingsFull('sw');
+    });
+
+    loadDailyReadingsFull('en');
   </script>
   <script src="app.js"></script>
 </body>

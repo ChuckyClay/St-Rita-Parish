@@ -6,7 +6,7 @@ async function translateText(text) {
     .replace(/Reading/gi, 'Somo')
     .replace(/Gospel/gi, 'Injili')
     .replace(/Responsorial Psalm/gi, 'Wimbo wa Katikati')
-    .replace(/Alleluia/gi, 'Shangilio');
+    .replace(/Alleluia/gi, 'Shangilio la Injili');
 }
 
 module.exports = { translateText };
