@@ -90,50 +90,29 @@ async function findTodayPost() {
   const today = getKenyaNow();
   const day = String(today.getDate());
   const year = String(today.getFullYear());
-  const month = monthNameSw(today);
-  const weekday = weekdayNameSw(today);
+  const month = monthNameSw(today); // e.g. APRILI
 
   const html = await fetchHtml(LIST_URL);
   const $ = cheerio.load(html);
 
   let found = null;
 
-  // The listing page uses links whose visible text can be empty.
-  // So inspect each masomo card/container and read its nearby heading/date text.
-  $('a[href*="/masomo-ya-misa/"]').each((_, el) => {
+  // On this site, the real title link is in the heading inside the listing card
+  $('h2 a, h3 a, h4 a, a[href*="/masomo-ya-misa/"]').each((_, el) => {
+    const text = normalize($(el).text());
     const href = $(el).attr('href');
-    const block = $(el).closest('div, article, li');
-    const nearbyText = normalize(block.text());
+
+    if (!href) return;
 
     if (
-      nearbyText.includes(month) &&
-      nearbyText.includes(day) &&
-      nearbyText.includes(year) &&
-      (nearbyText.includes(weekday) || nearbyText.includes('MASOMO'))
+      text.includes(month) &&
+      text.includes(day) &&
+      text.includes(year)
     ) {
-      found = absoluteUrl(href);
+      found = href.startsWith('http') ? href : `${BASE_URL}${href.startsWith('/') ? '' : '/'}${href}`;
       return false;
     }
   });
-
-  if (!found) {
-    // Fallback: inspect all headings and find the linked one nearest today's date
-    $('h1, h2, h3, h4, h5, h6').each((_, el) => {
-      const headingText = normalize($(el).text());
-      const parentText = normalize($(el).parent().text());
-      const link = $(el).closest('a[href*="/masomo-ya-misa/"]');
-
-      if (
-        (headingText.includes(month) || parentText.includes(month)) &&
-        (headingText.includes(day) || parentText.includes(day)) &&
-        (headingText.includes(year) || parentText.includes(year)) &&
-        link.length
-      ) {
-        found = absoluteUrl(link.attr('href'));
-        return false;
-      }
-    });
-  }
 
   if (!found) {
     throw new Error('No Kiswahili post found for today');
@@ -145,13 +124,6 @@ async function findTodayPost() {
 
 function extract(html) {
   const $ = cheerio.load(html);
-
-  // Use the full text of the article page and parse by lines.
-  const articleText = clean($('body').text());
-  if (!articleText) {
-    console.log('[SW] article text not found');
-    return [];
-  }
 
   const lines = $('body')
     .text()
@@ -167,7 +139,7 @@ function extract(html) {
     const upper = normalize(line);
     const type = classify(line);
 
-    // Start section
+    // start new section
     if (type !== 'OTHER') {
       if (current && current.content.length > 0) {
         readings.push({
@@ -188,8 +160,9 @@ function extract(html) {
 
     if (!current) continue;
 
-    // Stop when comments/footer area starts
+    // stop after main content
     if (
+      upper.includes('IMEPENDWA') ||
       upper.includes('MAONI') ||
       upper.includes('INGIA UTOE MAONI') ||
       upper.includes('COPYRIGHT') ||
@@ -198,11 +171,11 @@ function extract(html) {
       break;
     }
 
-    // First short scripture-looking line after section header becomes title citation
+    // first scripture ref after section header becomes title suffix
     if (
       expectingCitation &&
       line.length < 120 &&
-      /^(MDO|ZAB|YN|LK|MT|MK|RUM|1KOR|2KOR|EF|FLP|KOL|1THE|2THE|1TIM|2TIM|TIT|FLM|EBR|YAK|1PET|2PET|1YN|2YN|3YN|YUD|UFU)\.?/i.test(line)
+      /^(MDO|ZAB|YN|LK|MT|MK|RUM|1PET|2PET|1KOR|2KOR|EF|FLP|KOL)\b\.?/i.test(line)
     ) {
       current.title = `${current.title} - ${line}`;
       expectingCitation = false;
@@ -211,7 +184,6 @@ function extract(html) {
 
     expectingCitation = false;
 
-    // Skip liturgical responses/closings
     if (
       upper.includes('NENO LA BWANA') ||
       upper.includes('TUMSHUKURU MUNGU') ||
