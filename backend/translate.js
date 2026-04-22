@@ -1,192 +1,94 @@
-const fetch = require('node-fetch');
+const { spawn } = require('child_process');
 
-const MYMEMORY_BASE_URL = 'https://api.mymemory.translated.net/get';
-const LIBRE_BASE_URL = 'https://libretranslate.de/translate';
+function runOfflineTranslator(payload) {
+  return new Promise((resolve, reject) => {
+    const py = spawn('python3', ['offline_translate.py'], {
+      cwd: __dirname
+    });
 
-const CONTACT_EMAIL = 'maverickmarkyu@gmail.com';
+    let stdout = '';
+    let stderr = '';
 
-const cache = new Map();
+    py.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+    py.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
 
-/* =========================
-   TRANSLATORS
-   ========================= */
+    py.on('error', (err) => {
+      reject(err);
+    });
 
-async function translateMyMemory(text, attempt = 1) {
-  const url = new URL(MYMEMORY_BASE_URL);
-  url.searchParams.set('q', text);
-  url.searchParams.set('langpair', 'en|sw');
-  url.searchParams.set('de', CONTACT_EMAIL);
+    py.on('close', (code) => {
+      if (code !== 0) {
+        return reject(new Error(stderr || `offline_translate.py exited with code ${code}`));
+      }
 
-  const res = await fetch(url.toString());
+      try {
+        const parsed = JSON.parse(stdout);
+        resolve(parsed);
+      } catch (err) {
+        reject(new Error(`Failed to parse offline translation output: ${stdout}`));
+      }
+    });
 
-  if (res.status === 429) {
-    if (attempt >= 3) throw new Error('MyMemory 429');
-    await sleep(2000 * attempt);
-    return translateMyMemory(text, attempt + 1);
-  }
-
-  if (!res.ok) {
-    throw new Error(`MyMemory failed: ${res.status}`);
-  }
-
-  const data = await res.json();
-  return data?.responseData?.translatedText;
-}
-
-async function translateLibre(text) {
-  const res = await fetch(LIBRE_BASE_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      q: text,
-      source: 'en',
-      target: 'sw',
-      format: 'text'
-    })
+    py.stdin.write(JSON.stringify(payload));
+    py.stdin.end();
   });
-
-  if (!res.ok) {
-    throw new Error(`LibreTranslate failed: ${res.status}`);
-  }
-
-  const data = await res.json();
-  return data?.translatedText;
-}
-
-/* =========================
-   MAIN TRANSLATION PIPELINE
-   ========================= */
-
-async function translateChunk(text) {
-  if (!text || !String(text).trim()) return '';
-
-  const normalizedText = String(text).trim();
-
-  if (cache.has(normalizedText)) {
-    return cache.get(normalizedText);
-  }
-
-  let translated = null;
-
-  // 🔥 TRY 1: MyMemory
-  try {
-    translated = await translateMyMemory(normalizedText);
-    console.log('[TRANSLATE] MyMemory success');
-  } catch (err) {
-    console.warn('[TRANSLATE] MyMemory failed:', err.message);
-  }
-
-  // 🔥 TRY 2: LibreTranslate
-  if (!translated || translated.trim() === '') {
-    try {
-      translated = await translateLibre(normalizedText);
-      console.log('[TRANSLATE] LibreTranslate success');
-    } catch (err) {
-      console.warn('[TRANSLATE] LibreTranslate failed:', err.message);
-    }
-  }
-
-  if (!translated || !String(translated).trim()) {
-    throw new Error('All translators failed');
-  }
-
-  const finalText = String(translated).trim();
-  cache.set(normalizedText, finalText);
-
-  return finalText;
-}
-
-/* =========================
-   PARSING
-   ========================= */
-
-function extractSection(text, startMarker, endMarker = null) {
-  const startIndex = text.indexOf(startMarker);
-  if (startIndex === -1) return '';
-
-  const fromStart = text.slice(startIndex + startMarker.length);
-
-  if (!endMarker) return fromStart.trim();
-
-  const endIndex = fromStart.indexOf(endMarker);
-  return endIndex === -1 ? fromStart.trim() : fromStart.slice(0, endIndex).trim();
-}
-
-function cleanSection(text) {
-  return String(text || '')
-    .replace(/\[.*?\]/g, '')
-    .replace(/<<<.*?>>>/g, '')
-    .trim();
 }
 
 function looksLikeUntranslatedEnglish(original, translated) {
-  const o = String(original || '').toLowerCase();
-  const t = String(translated || '').toLowerCase();
+  const o = String(original || '').trim().toLowerCase();
+  const t = String(translated || '').trim().toLowerCase();
 
+  if (!o || !t) return false;
   if (o === t) return true;
+  if (t.includes(o) || o.includes(t)) return true;
 
-  const signals = [
-    'reading',
+  const englishSignals = [
+    'reading 1',
+    'responsorial psalm',
     'gospel',
-    'psalm',
     'alleluia',
-    'jesus said',
-    'there broke out'
+    'wednesday of the third week of easter',
+    'there broke out a severe persecution',
+    'jesus said to the crowds'
   ];
 
-  return signals.filter(s => t.includes(s)).length >= 2;
+  return englishSignals.filter(p => t.includes(p)).length >= 2;
 }
 
-/* =========================
-   READING BLOCK
-   ========================= */
-
 async function translateReadingBlock({ title, content, day_title }) {
-  const combined = `
-<<<TITLE>>>
-${title}
+  const safeTitle = String(title || '').trim();
+  const safeContent = String(content || '').trim();
+  const safeDayTitle = String(day_title || '').trim();
 
-<<<DAY>>>
-${day_title || ''}
+  const translated = await runOfflineTranslator({
+    title: safeTitle,
+    content: safeContent,
+    day_title: safeDayTitle
+  });
 
-<<<CONTENT>>>
-${content}
-`;
-
-  const translated = await translateChunk(combined);
-
-  const tTitle = cleanSection(
-    extractSection(translated, '<<<TITLE>>>', '<<<DAY>>>')
-  ) || title;
-
-  const tDay = cleanSection(
-    extractSection(translated, '<<<DAY>>>', '<<<CONTENT>>>')
-  ) || day_title;
-
-  const tContent = cleanSection(
-    extractSection(translated, '<<<CONTENT>>>')
-  ) || content;
+  const translatedTitle = String(translated.title || '').trim() || safeTitle;
+  const translatedDayTitle = String(translated.day_title || '').trim() || safeDayTitle;
+  const translatedContent = String(translated.content || '').trim() || safeContent;
 
   const unchangedCount = [
-    looksLikeUntranslatedEnglish(title, tTitle),
-    looksLikeUntranslatedEnglish(day_title, tDay),
-    looksLikeUntranslatedEnglish(content, tContent)
+    looksLikeUntranslatedEnglish(safeTitle, translatedTitle),
+    looksLikeUntranslatedEnglish(safeDayTitle, translatedDayTitle),
+    looksLikeUntranslatedEnglish(safeContent, translatedContent)
   ].filter(Boolean).length;
 
   if (unchangedCount >= 2) {
-    throw new Error('Translation looks like English');
+    throw new Error('Offline translation returned mostly unchanged English text');
   }
 
   return {
-    title: tTitle,
-    day_title: tDay,
-    content: tContent
+    title: translatedTitle,
+    day_title: translatedDayTitle,
+    content: translatedContent
   };
 }
 
