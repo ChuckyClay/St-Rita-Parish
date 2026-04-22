@@ -833,3 +833,28 @@ hr {
   flex: 1;
   margin-bottom: 0;
 }
+
+.chatbot-quick {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+
+.chatbot-quick button {
+  background: #f4f4f4;
+  border: none;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.chatbot-quick button:hover {
+  background: #ddd;
+}
+
+.typing {
+  font-style: italic;
+  opacity: 0.7;
+}
