@@ -30,7 +30,7 @@ router.post('/chat', async (req, res) => {
 
     if (!isCatholicOrParishQuestion(message)) {
       return res.json({
-        reply: 'I can help with Catholic faith, St. Rita Parish information, Mass, sacraments, saints, prayers, daily readings, announcements, and related questions.'
+        reply: 'Sorry, I can only help with St. Rita Parish and Catholic related information.'
       });
     }
 
