@@ -1,7 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const db = require('./db');
-const { translateText } = require('./translate');
+const { translateReadingBlock } = require('./translate');
 
 const router = express.Router();
 
@@ -80,60 +80,74 @@ router.get('/', async (req, res) => {
 
       if (englishRows.length > 0) {
         const translatedRows = [];
+        let translationWorked = true;
 
         for (const row of englishRows) {
-          let translatedTitle;
-          let translatedContent;
-          let translatedDayTitle;
-
           try {
-            translatedTitle = await translateText(row.title);
-            translatedContent = await translateText(row.content);
-            translatedDayTitle = row.day_title ? await translateText(row.day_title) : null;
-          } catch (err) {
-            console.error('[AUTO] Translation failed, falling back to English text:', err.message);
+            const translated = await translateReadingBlock({
+              title: row.title,
+              content: row.content,
+              day_title: row.day_title
+            });
 
-            translatedTitle = row.title;
-            translatedContent = row.content;
-            translatedDayTitle = row.day_title || null;
+            translatedRows.push({
+              ...row,
+              date: today,
+              lang: 'sw',
+              title: translated.title,
+              content: translated.content,
+              day_title: translated.day_title,
+              lectionary: row.lectionary || null,
+              source_name: 'AUTO_TRANSLATED'
+            });
+
+            // small delay to reduce free-tier throttling
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          } catch (err) {
+            translationWorked = false;
+            console.error('[AUTO] Kiswahili translation failed, not caching sw rows:', err.message);
+            break;
+          }
+        }
+
+        if (translationWorked && translatedRows.length === englishRows.length) {
+          for (const row of translatedRows) {
+            await dbRun(
+              `
+              INSERT INTO readings
+              (date, lang, section_type, title, content, day_title, lectionary, source_name, source_url, fetched_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              `,
+              [
+                today,
+                'sw',
+                row.section_type,
+                row.title,
+                row.content,
+                row.day_title,
+                row.lectionary,
+                'AUTO_TRANSLATED',
+                row.source_url,
+                new Date().toISOString()
+              ]
+            );
           }
 
-          const translatedLectionary = row.lectionary || null;
-
-          await dbRun(
-            `
-            INSERT INTO readings
-            (date, lang, section_type, title, content, day_title, lectionary, source_name, source_url, fetched_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `,
-            [
-              today,
-              'sw',
-              row.section_type,
-              translatedTitle,
-              translatedContent,
-              translatedDayTitle,
-              translatedLectionary,
-              'AUTO_TRANSLATED',
-              row.source_url,
-              new Date().toISOString()
-            ]
-          );
-
-          translatedRows.push({
-            ...row,
-            date: today,
+          console.log('[AUTO] Generated and cached Kiswahili readings from English');
+          return res.json({
             lang: 'sw',
-            title: translatedTitle,
-            content: translatedContent,
-            day_title: translatedDayTitle,
-            lectionary: translatedLectionary,
-            source_name: 'AUTO_TRANSLATED'
+            fallback: false,
+            readings: translatedRows
           });
         }
 
-        console.log('[AUTO] Generated Kiswahili readings from English');
-        return res.json(translatedRows);
+        // translation failed: do NOT cache fake sw rows
+        return res.json({
+          lang: 'en',
+          fallback: true,
+          message: 'Kiswahili translation is temporarily unavailable. Showing English readings instead.',
+          readings: englishRows
+        });
       }
     }
 

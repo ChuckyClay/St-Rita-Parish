@@ -114,31 +114,47 @@
         .replace(/'/g, '&#039;');
     }
 
+    function renderLanguageNote(lang, fallback = false, message = '') {
+      const note = document.getElementById('language-note');
+
+      if (lang === 'sw' && fallback) {
+        note.innerHTML = `
+          <div class="card" style="padding:12px;">
+            <p style="margin:0;">
+              <strong>Kiswahili translation unavailable.</strong>
+              ${escapeHtml(message || 'Showing English readings temporarily.')}
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      if (lang === 'sw') {
+        note.innerHTML = `
+          <div class="card" style="padding:12px;">
+            <p style="margin:0;">
+              <strong>Kiswahili (translated)</strong> — This version is generated from the English readings and cached for faster access.
+              For original Kiswahili readings, use the links below.
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      note.innerHTML = '';
+    }
+
     function setActiveLanguage(lang) {
       currentLang = lang;
 
       const enBtn = document.getElementById('lang-en');
       const swBtn = document.getElementById('lang-sw');
-      const note = document.getElementById('language-note');
 
       enBtn.setAttribute('aria-pressed', lang === 'en' ? 'true' : 'false');
       swBtn.setAttribute('aria-pressed', lang === 'sw' ? 'true' : 'false');
 
       enBtn.style.opacity = lang === 'en' ? '1' : '0.75';
       swBtn.style.opacity = lang === 'sw' ? '1' : '0.75';
-
-      if (lang === 'sw') {
-        note.innerHTML = `
-          <div class="card" style="padding:12px;">
-            <p style="margin:0;">
-              <strong>Kiswahili (translated)</strong> — This version is currently generated from the English readings.
-              For original Kiswahili readings, use the links below.
-            </p>
-          </div>
-        `;
-      } else {
-        note.innerHTML = '';
-      }
     }
 
     async function loadDailyReadingsFull(lang = 'en') {
@@ -146,6 +162,7 @@
       const sourceLink = document.getElementById('source-link');
 
       setActiveLanguage(lang);
+      renderLanguageNote(lang, false, '');
 
       container.innerHTML = '<div class="card"><p>Loading today’s readings...</p></div>';
       sourceLink.href = getUsccbTodayLink();
@@ -154,34 +171,46 @@
         const res = await fetch(`${PAGE_API_BASE}/api/readings?lang=${encodeURIComponent(lang)}`);
         if (!res.ok) throw new Error('Failed to fetch readings');
 
-        const readings = await res.json();
+        const data = await res.json();
+        const readings = Array.isArray(data) ? data : (data.readings || []);
+        const fallback = !Array.isArray(data) && !!data.fallback;
+        const responseLang = !Array.isArray(data) && data.lang ? data.lang : lang;
+        const message = !Array.isArray(data) && data.message ? data.message : '';
 
-        if (Array.isArray(readings) && readings.length > 0) {
-          const first = readings[0];
-          const dayTitle = first?.day_title || '';
-          const lectionary = first?.lectionary || '';
-
-          container.innerHTML =
-            `<p class="meta">${formatKenyaDate()}</p>` +
-            (dayTitle ? `
-              <div class="card" style="margin-bottom:16px;">
-                <h3>${escapeHtml(dayTitle)}</h3>
-                ${lectionary ? `<p><strong>${escapeHtml(lectionary)}</strong></p>` : ''}
-              </div>
-            ` : '') +
-            readings.map(r => `
-              <div class="card" style="margin-bottom:16px;">
-                <h3>${escapeHtml(r.title)}</h3>
-                <p style="white-space: pre-line;">${escapeHtml(r.content)}</p>
-              </div>
-            `).join('');
-        } else {
+        if (!Array.isArray(readings) || readings.length === 0) {
           container.innerHTML = `
             <div class="card">
               <p>No readings available yet for today. Please check again later.</p>
             </div>
           `;
+          return;
         }
+
+        if (lang === 'sw') {
+          renderLanguageNote('sw', fallback, message);
+        } else {
+          renderLanguageNote('en', false, '');
+        }
+
+        const first = readings[0];
+        const dayTitle = first?.day_title || '';
+        const lectionary = first?.lectionary || '';
+
+        container.innerHTML =
+          `<p class="meta">${formatKenyaDate()}</p>` +
+          (fallback ? `<p class="meta"><em>Currently showing ${escapeHtml(responseLang === 'en' ? 'English' : responseLang)} readings.</em></p>` : '') +
+          (dayTitle ? `
+            <div class="card" style="margin-bottom:16px;">
+              <h3>${escapeHtml(dayTitle)}</h3>
+              ${lectionary ? `<p><strong>${escapeHtml(lectionary)}</strong></p>` : ''}
+            </div>
+          ` : '') +
+          readings.map(r => `
+            <div class="card" style="margin-bottom:16px;">
+              <h3>${escapeHtml(r.title)}</h3>
+              <p style="white-space: pre-line;">${escapeHtml(r.content)}</p>
+            </div>
+          `).join('');
       } catch (err) {
         container.innerHTML = `
           <div class="card">

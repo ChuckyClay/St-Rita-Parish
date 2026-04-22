@@ -3,6 +3,9 @@ const fetch = require('node-fetch');
 const MYMEMORY_BASE_URL = 'https://api.mymemory.translated.net/get';
 const CONTACT_EMAIL = 'maverickmarkyu@gmail.com';
 
+// simple in-memory cache
+const cache = new Map();
+
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -10,23 +13,29 @@ function sleep(ms) {
 async function translateChunk(text, attempt = 1) {
   if (!text || !String(text).trim()) return '';
 
-  const url = new URL(MYMEMORY_BASE_URL);
-  url.searchParams.set('q', text);
-  url.searchParams.set('langpair', 'en|sw');
+  const normalizedText = String(text).trim();
 
-  if (CONTACT_EMAIL && CONTACT_EMAIL !== 'maverickmarkyu@gmail.com') {
-    url.searchParams.set('de', CONTACT_EMAIL);
+  if (cache.has(normalizedText)) {
+    return cache.get(normalizedText);
   }
+
+  const url = new URL(MYMEMORY_BASE_URL);
+  url.searchParams.set('q', normalizedText);
+  url.searchParams.set('langpair', 'en|sw');
+  url.searchParams.set('de', CONTACT_EMAIL);
 
   const res = await fetch(url.toString());
 
   if (res.status === 429) {
-    if (attempt >= 3) {
+    if (attempt >= 4) {
       throw new Error('Translation request failed: 429');
     }
 
-    await sleep(2000 * attempt);
-    return translateChunk(text, attempt + 1);
+    const delay = 3000 * attempt;
+    console.warn(`[TRANSLATE] 429 detected. Retrying in ${delay}ms`);
+    await sleep(delay);
+
+    return translateChunk(normalizedText, attempt + 1);
   }
 
   if (!res.ok) {
@@ -34,48 +43,63 @@ async function translateChunk(text, attempt = 1) {
   }
 
   const data = await res.json();
+  const translated = data?.responseData?.translatedText;
 
-  if (!data || !data.responseData || !data.responseData.translatedText) {
+  if (!translated || !String(translated).trim()) {
     throw new Error('Invalid translation response');
   }
 
-  return data.responseData.translatedText;
+  const finalText = String(translated).trim();
+  cache.set(normalizedText, finalText);
+
+  return finalText;
 }
 
-function splitIntoChunks(text, maxLength = 400) {
-  const clean = String(text || '').trim();
-  if (!clean) return [];
+function extractSection(text, startMarker, endMarker = null) {
+  const startIndex = text.indexOf(startMarker);
+  if (startIndex === -1) return '';
 
-  const parts = [];
-  let current = '';
+  const fromStart = text.slice(startIndex + startMarker.length);
 
-  for (const paragraph of clean.split('\n')) {
-    const candidate = current ? `${current}\n${paragraph}` : paragraph;
-
-    if (candidate.length > maxLength) {
-      if (current) parts.push(current);
-      current = paragraph;
-    } else {
-      current = candidate;
-    }
+  if (!endMarker) {
+    return fromStart.trim();
   }
 
-  if (current) parts.push(current);
-
-  return parts;
-}
-
-async function translateText(text) {
-  const chunks = splitIntoChunks(text, 400);
-  const translated = [];
-
-  for (const chunk of chunks) {
-    const result = await translateChunk(chunk);
-    translated.push(result);
-    await sleep(1200);
+  const endIndex = fromStart.indexOf(endMarker);
+  if (endIndex === -1) {
+    return fromStart.trim();
   }
 
-  return translated.join('\n');
+  return fromStart.slice(0, endIndex).trim();
 }
 
-module.exports = { translateText };
+async function translateReadingBlock({ title, content, day_title }) {
+  const safeTitle = String(title || '').trim();
+  const safeContent = String(content || '').trim();
+  const safeDayTitle = String(day_title || '').trim();
+
+  const combined = [
+    '[[TITLE]]',
+    safeTitle,
+    '[[DAY]]',
+    safeDayTitle,
+    '[[CONTENT]]',
+    safeContent
+  ].join('\n');
+
+  const translated = await translateChunk(combined);
+
+  const translatedTitle = extractSection(translated, '[[TITLE]]', '[[DAY]]') || safeTitle;
+  const translatedDayTitle = extractSection(translated, '[[DAY]]', '[[CONTENT]]') || safeDayTitle;
+  const translatedContent = extractSection(translated, '[[CONTENT]]') || safeContent;
+
+  return {
+    title: translatedTitle,
+    day_title: translatedDayTitle,
+    content: translatedContent
+  };
+}
+
+module.exports = {
+  translateReadingBlock
+};
