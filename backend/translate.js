@@ -3,7 +3,6 @@ const fetch = require('node-fetch');
 const MYMEMORY_BASE_URL = 'https://api.mymemory.translated.net/get';
 const CONTACT_EMAIL = 'maverickmarkyu@gmail.com';
 
-// simple in-memory cache
 const cache = new Map();
 
 function sleep(ms) {
@@ -34,7 +33,6 @@ async function translateChunk(text, attempt = 1) {
     const delay = 3000 * attempt;
     console.warn(`[TRANSLATE] 429 detected. Retrying in ${delay}ms`);
     await sleep(delay);
-
     return translateChunk(normalizedText, attempt + 1);
   }
 
@@ -73,56 +71,81 @@ function extractSection(text, startMarker, endMarker = null) {
   return fromStart.slice(0, endIndex).trim();
 }
 
+function cleanSection(text) {
+  return String(text || '')
+    .replace(/\[.*?\]/g, '')
+    .replace(/<<<.*?>>>/g, '')
+    .trim();
+}
+
+function looksLikeUntranslatedEnglish(original, translated) {
+  const o = String(original || '').trim().toLowerCase();
+  const t = String(translated || '').trim().toLowerCase();
+
+  if (!o || !t) return false;
+
+  // exactly same or almost same
+  if (o === t) return true;
+  if (t.includes(o) || o.includes(t)) return true;
+
+  // obvious English phrases still present
+  const englishSignals = [
+    'reading 1',
+    'responsorial psalm',
+    'gospel',
+    'alleluia',
+    'wednesday of the third week of easter',
+    'there broke out a severe persecution',
+    'jesus said to the crowds'
+  ];
+
+  const hits = englishSignals.filter(p => t.includes(p)).length;
+  return hits >= 2;
+}
+
 async function translateReadingBlock({ title, content, day_title }) {
   const safeTitle = String(title || '').trim();
   const safeContent = String(content || '').trim();
   const safeDayTitle = String(day_title || '').trim();
 
-  // 🔥 Strong markers that won’t be translated
-  const combined = `
-<<<TITLE>>>
-${safeTitle}
-
-<<<DAY>>>
-${safeDayTitle}
-
-<<<CONTENT>>>
-${safeContent}
-`;
+  const combined = [
+    '<<<TITLE>>>',
+    safeTitle,
+    '<<<DAY>>>',
+    safeDayTitle,
+    '<<<CONTENT>>>',
+    safeContent
+  ].join('\n');
 
   const translated = await translateChunk(combined);
 
-  // 🔥 Extract safely
-  const getSection = (text, start, end) => {
-    const s = text.indexOf(start);
-    if (s === -1) return '';
+  const translatedTitle = cleanSection(
+    extractSection(translated, '<<<TITLE>>>', '<<<DAY>>>')
+  ) || safeTitle;
 
-    const from = text.slice(s + start.length);
-    if (!end) return from.trim();
+  const translatedDayTitle = cleanSection(
+    extractSection(translated, '<<<DAY>>>', '<<<CONTENT>>>')
+  ) || safeDayTitle;
 
-    const e = from.indexOf(end);
-    return (e === -1 ? from : from.slice(0, e)).trim();
-  };
+  const translatedContent = cleanSection(
+    extractSection(translated, '<<<CONTENT>>>')
+  ) || safeContent;
 
-  let tTitle = getSection(translated, '<<<TITLE>>>', '<<<DAY>>>');
-  let tDay = getSection(translated, '<<<DAY>>>', '<<<CONTENT>>>');
-  let tContent = getSection(translated, '<<<CONTENT>>>');
+  // 🔥 reject fake “translations”
+  const unchangedCount = [
+    looksLikeUntranslatedEnglish(safeTitle, translatedTitle),
+    looksLikeUntranslatedEnglish(safeDayTitle, translatedDayTitle),
+    looksLikeUntranslatedEnglish(safeContent, translatedContent)
+  ].filter(Boolean).length;
 
-  // 🔥 CLEANUP: remove garbage like [MAUDHUI]
-  const clean = (text) =>
-    text
-      .replace(/\[.*?\]/g, '') // remove [anything]
-      .replace(/<<<.*?>>>/g, '') // remove leftover markers
-      .trim();
-
-  tTitle = clean(tTitle) || safeTitle;
-  tDay = clean(tDay) || safeDayTitle;
-  tContent = clean(tContent) || safeContent;
+  if (unchangedCount >= 2) {
+    throw new Error('Translation returned mostly unchanged English text');
+  }
 
   return {
-    title: tTitle,
-    day_title: tDay,
-    content: tContent
+    title: translatedTitle,
+    day_title: translatedDayTitle,
+    content: translatedContent
   };
 }
 
