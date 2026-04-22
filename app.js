@@ -45,21 +45,18 @@ function initMenuToggle() {
     nav.classList.toggle('open');
   });
 
-  // Close when clicking a link (mobile UX)
   nav.querySelectorAll('a').forEach(link => {
     link.addEventListener('click', () => {
       nav.classList.remove('open');
     });
   });
 
-  // Close on outside click
   document.addEventListener('click', (e) => {
     if (!nav.contains(e.target) && !toggle.contains(e.target)) {
       nav.classList.remove('open');
     }
   });
 
-  // Lock body scroll when menu is open
   document.body.style.overflow = nav.classList.contains('open') ? 'hidden' : '';
 }
 
@@ -71,7 +68,7 @@ async function loadDailyReadingsPreview() {
   const container = document.getElementById('daily-readings-preview');
   if (!container) return;
 
-  setLoading(container, 'Loading today’s readings...');
+  setLoading(container, 'Loading today\'s readings...');
 
   try {
     const readings = await fetchJson(`${API_BASE}/api/readings?lang=en`);
@@ -165,21 +162,43 @@ async function loadEventsPreview() {
 }
 
 /* =========================
-   INIT
+   CHATBOT INJECTION
 ========================= */
 
-document.addEventListener('DOMContentLoaded', () => {
-  initMenuToggle();
-  loadDailyReadingsPreview();
-  loadAnnouncementsPreview();
-  loadEventsPreview();
-});
+function injectChatbot() {
+  // Avoid injecting twice
+  if (document.getElementById('chatbot-shell')) return;
 
-window.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.fade-up').forEach(el => {
-    el.style.animationPlayState = 'running';
-  });
-});
+  const shell = document.createElement('div');
+  shell.id = 'chatbot-shell';
+  shell.className = 'chatbot-shell';
+  shell.innerHTML = `
+    <button id="chatbot-toggle" class="chatbot-toggle">Ask Rita</button>
+
+    <div id="chatbot-panel" class="chatbot-panel" style="display:none;">
+      <div class="chatbot-header">
+        <strong>Rita</strong>
+      </div>
+
+      <div id="chatbot-messages" class="chatbot-messages">
+        <div class="chatbot-message bot">
+          Welcome. I'm Rita, your Catholic assistant. I can help with Catholic questions and St. Rita Parish information.
+        </div>
+      </div>
+
+      <form id="chatbot-form" class="chatbot-form">
+        <input id="chatbot-input" type="text" placeholder="Ask a Catholic question..." required />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(shell);
+}
+
+/* =========================
+   CHATBOT LOGIC
+========================= */
 
 function appendChatMessage(role, text) {
   const box = document.getElementById('chatbot-messages');
@@ -204,13 +223,11 @@ function initCatholicChatbot() {
     panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
   });
 
-    // Close on outside click
   document.addEventListener('click', (e) => {
     if (panel.style.display === 'block' && !panel.contains(e.target) && !toggle.contains(e.target)) {
       panel.style.display = 'none';
     }
   });
-
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -229,19 +246,31 @@ function initCatholicChatbot() {
       });
 
       const data = await res.json();
-
-      const messages = document.getElementById('chatbot-messages');
-      messages.lastElementChild.remove();
-
+      document.getElementById('chatbot-messages').lastElementChild.remove();
       appendChatMessage('bot', data.reply || data.error || 'No response available.');
     } catch (err) {
-      const messages = document.getElementById('chatbot-messages');
-      messages.lastElementChild.remove();
+      document.getElementById('chatbot-messages').lastElementChild.remove();
       appendChatMessage('bot', 'Sorry, I could not respond right now.');
     }
   });
 }
 
+/* =========================
+   INIT
+========================= */
+
 document.addEventListener('DOMContentLoaded', () => {
+  initMenuToggle();
+  loadDailyReadingsPreview();
+  loadAnnouncementsPreview();
+  loadEventsPreview();
+
+  injectChatbot();
   initCatholicChatbot();
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.fade-up').forEach(el => {
+    el.style.animationPlayState = 'running';
+  });
 });

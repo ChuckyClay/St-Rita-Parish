@@ -58,27 +58,6 @@
     <i>Designed & Developed by DevTwins Developers</i>
   </footer>
 
-  <div id="chatbot-shell" class="chatbot-shell">
-    <button id="chatbot-toggle" class="chatbot-toggle">Ask Rita</button>
-
-    <div id="chatbot-panel" class="chatbot-panel" style="display:none;">
-      <div class="chatbot-header">
-        <strong>Rita</strong>
-      </div>
-
-      <div id="chatbot-messages" class="chatbot-messages">
-        <div class="chatbot-message bot">
-          Welcome. I'm Rita, your Catholic assistant. I can help with Catholic questions and St. Rita Parish information.
-        </div>
-      </div>
-
-      <form id="chatbot-form" class="chatbot-form">
-        <input id="chatbot-input" type="text" placeholder="Ask a Catholic question..." required />
-        <button type="submit">Send</button>
-      </form>
-    </div>
-  </div>
-
   <script>
     const PAGE_API_BASE = 'https://st-rita-parish.onrender.com';
     let currentLang = 'en';
@@ -97,11 +76,9 @@
     function getUsccbTodayLink() {
       const now = new Date();
       const kenya = new Date(now.toLocaleString('en-US', { timeZone: 'Africa/Nairobi' }));
-      const yyyy = kenya.getFullYear();
       const mm = String(kenya.getMonth() + 1).padStart(2, '0');
       const dd = String(kenya.getDate()).padStart(2, '0');
       const yy = String(kenya.getFullYear()).slice(-2);
-
       return `https://bible.usccb.org/bible/readings/${mm}${dd}${yy}.cfm`;
     }
 
@@ -146,13 +123,10 @@
 
     function setActiveLanguage(lang) {
       currentLang = lang;
-
       const enBtn = document.getElementById('lang-en');
       const swBtn = document.getElementById('lang-sw');
-
       enBtn.setAttribute('aria-pressed', lang === 'en' ? 'true' : 'false');
       swBtn.setAttribute('aria-pressed', lang === 'sw' ? 'true' : 'false');
-
       enBtn.style.opacity = lang === 'en' ? '1' : '0.75';
       swBtn.style.opacity = lang === 'sw' ? '1' : '0.75';
     }
@@ -164,7 +138,7 @@
       setActiveLanguage(lang);
       renderLanguageNote(lang, false, '');
 
-      container.innerHTML = '<div class="card"><p>Loading today’s readings...</p></div>';
+      container.innerHTML = '<div class="card"><p>Loading today\'s readings...</p></div>';
       sourceLink.href = getUsccbTodayLink();
 
       try {
@@ -178,11 +152,7 @@
         const message = !Array.isArray(data) && data.message ? data.message : '';
 
         if (!Array.isArray(readings) || readings.length === 0) {
-          container.innerHTML = `
-            <div class="card">
-              <p>No readings available yet for today. Please check again later.</p>
-            </div>
-          `;
+          container.innerHTML = `<div class="card"><p>No readings available yet for today. Please check again later.</p></div>`;
           return;
         }
 
@@ -212,22 +182,13 @@
             </div>
           `).join('');
       } catch (err) {
-        container.innerHTML = `
-          <div class="card">
-            <p>Unable to load daily readings at the moment.</p>
-          </div>
-        `;
+        container.innerHTML = `<div class="card"><p>Unable to load daily readings at the moment.</p></div>`;
         console.error('Daily readings load error:', err);
       }
     }
 
-    document.getElementById('lang-en').addEventListener('click', () => {
-      loadDailyReadingsFull('en');
-    });
-
-    document.getElementById('lang-sw').addEventListener('click', () => {
-      loadDailyReadingsFull('sw');
-    });
+    document.getElementById('lang-en').addEventListener('click', () => loadDailyReadingsFull('en'));
+    document.getElementById('lang-sw').addEventListener('click', () => loadDailyReadingsFull('sw'));
 
     loadDailyReadingsFull('en');
   </script>
