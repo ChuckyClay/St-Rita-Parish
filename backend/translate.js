@@ -1,6 +1,8 @@
 const fetch = require('node-fetch');
 
 const MYMEMORY_BASE_URL = 'https://api.mymemory.translated.net/get';
+const LIBRE_BASE_URL = 'https://libretranslate.de/translate';
+
 const CONTACT_EMAIL = 'maverickmarkyu@gmail.com';
 
 const cache = new Map();
@@ -9,7 +11,59 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function translateChunk(text, attempt = 1) {
+/* =========================
+   TRANSLATORS
+   ========================= */
+
+async function translateMyMemory(text, attempt = 1) {
+  const url = new URL(MYMEMORY_BASE_URL);
+  url.searchParams.set('q', text);
+  url.searchParams.set('langpair', 'en|sw');
+  url.searchParams.set('de', CONTACT_EMAIL);
+
+  const res = await fetch(url.toString());
+
+  if (res.status === 429) {
+    if (attempt >= 3) throw new Error('MyMemory 429');
+    await sleep(2000 * attempt);
+    return translateMyMemory(text, attempt + 1);
+  }
+
+  if (!res.ok) {
+    throw new Error(`MyMemory failed: ${res.status}`);
+  }
+
+  const data = await res.json();
+  return data?.responseData?.translatedText;
+}
+
+async function translateLibre(text) {
+  const res = await fetch(LIBRE_BASE_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      q: text,
+      source: 'en',
+      target: 'sw',
+      format: 'text'
+    })
+  });
+
+  if (!res.ok) {
+    throw new Error(`LibreTranslate failed: ${res.status}`);
+  }
+
+  const data = await res.json();
+  return data?.translatedText;
+}
+
+/* =========================
+   MAIN TRANSLATION PIPELINE
+   ========================= */
+
+async function translateChunk(text) {
   if (!text || !String(text).trim()) return '';
 
   const normalizedText = String(text).trim();
@@ -18,33 +72,28 @@ async function translateChunk(text, attempt = 1) {
     return cache.get(normalizedText);
   }
 
-  const url = new URL(MYMEMORY_BASE_URL);
-  url.searchParams.set('q', normalizedText);
-  url.searchParams.set('langpair', 'en|sw');
-  url.searchParams.set('de', CONTACT_EMAIL);
+  let translated = null;
 
-  const res = await fetch(url.toString());
+  // 🔥 TRY 1: MyMemory
+  try {
+    translated = await translateMyMemory(normalizedText);
+    console.log('[TRANSLATE] MyMemory success');
+  } catch (err) {
+    console.warn('[TRANSLATE] MyMemory failed:', err.message);
+  }
 
-  if (res.status === 429) {
-    if (attempt >= 4) {
-      throw new Error('Translation request failed: 429');
+  // 🔥 TRY 2: LibreTranslate
+  if (!translated || translated.trim() === '') {
+    try {
+      translated = await translateLibre(normalizedText);
+      console.log('[TRANSLATE] LibreTranslate success');
+    } catch (err) {
+      console.warn('[TRANSLATE] LibreTranslate failed:', err.message);
     }
-
-    const delay = 3000 * attempt;
-    console.warn(`[TRANSLATE] 429 detected. Retrying in ${delay}ms`);
-    await sleep(delay);
-    return translateChunk(normalizedText, attempt + 1);
   }
-
-  if (!res.ok) {
-    throw new Error(`Translation request failed: ${res.status}`);
-  }
-
-  const data = await res.json();
-  const translated = data?.responseData?.translatedText;
 
   if (!translated || !String(translated).trim()) {
-    throw new Error('Invalid translation response');
+    throw new Error('All translators failed');
   }
 
   const finalText = String(translated).trim();
@@ -53,22 +102,20 @@ async function translateChunk(text, attempt = 1) {
   return finalText;
 }
 
+/* =========================
+   PARSING
+   ========================= */
+
 function extractSection(text, startMarker, endMarker = null) {
   const startIndex = text.indexOf(startMarker);
   if (startIndex === -1) return '';
 
   const fromStart = text.slice(startIndex + startMarker.length);
 
-  if (!endMarker) {
-    return fromStart.trim();
-  }
+  if (!endMarker) return fromStart.trim();
 
   const endIndex = fromStart.indexOf(endMarker);
-  if (endIndex === -1) {
-    return fromStart.trim();
-  }
-
-  return fromStart.slice(0, endIndex).trim();
+  return endIndex === -1 ? fromStart.trim() : fromStart.slice(0, endIndex).trim();
 }
 
 function cleanSection(text) {
@@ -79,73 +126,67 @@ function cleanSection(text) {
 }
 
 function looksLikeUntranslatedEnglish(original, translated) {
-  const o = String(original || '').trim().toLowerCase();
-  const t = String(translated || '').trim().toLowerCase();
+  const o = String(original || '').toLowerCase();
+  const t = String(translated || '').toLowerCase();
 
-  if (!o || !t) return false;
-
-  // exactly same or almost same
   if (o === t) return true;
-  if (t.includes(o) || o.includes(t)) return true;
 
-  // obvious English phrases still present
-  const englishSignals = [
-    'reading 1',
-    'responsorial psalm',
+  const signals = [
+    'reading',
     'gospel',
+    'psalm',
     'alleluia',
-    'wednesday of the third week of easter',
-    'there broke out a severe persecution',
-    'jesus said to the crowds'
+    'jesus said',
+    'there broke out'
   ];
 
-  const hits = englishSignals.filter(p => t.includes(p)).length;
-  return hits >= 2;
+  return signals.filter(s => t.includes(s)).length >= 2;
 }
 
-async function translateReadingBlock({ title, content, day_title }) {
-  const safeTitle = String(title || '').trim();
-  const safeContent = String(content || '').trim();
-  const safeDayTitle = String(day_title || '').trim();
+/* =========================
+   READING BLOCK
+   ========================= */
 
-  const combined = [
-    '<<<TITLE>>>',
-    safeTitle,
-    '<<<DAY>>>',
-    safeDayTitle,
-    '<<<CONTENT>>>',
-    safeContent
-  ].join('\n');
+async function translateReadingBlock({ title, content, day_title }) {
+  const combined = `
+<<<TITLE>>>
+${title}
+
+<<<DAY>>>
+${day_title || ''}
+
+<<<CONTENT>>>
+${content}
+`;
 
   const translated = await translateChunk(combined);
 
-  const translatedTitle = cleanSection(
+  const tTitle = cleanSection(
     extractSection(translated, '<<<TITLE>>>', '<<<DAY>>>')
-  ) || safeTitle;
+  ) || title;
 
-  const translatedDayTitle = cleanSection(
+  const tDay = cleanSection(
     extractSection(translated, '<<<DAY>>>', '<<<CONTENT>>>')
-  ) || safeDayTitle;
+  ) || day_title;
 
-  const translatedContent = cleanSection(
+  const tContent = cleanSection(
     extractSection(translated, '<<<CONTENT>>>')
-  ) || safeContent;
+  ) || content;
 
-  // 🔥 reject fake “translations”
   const unchangedCount = [
-    looksLikeUntranslatedEnglish(safeTitle, translatedTitle),
-    looksLikeUntranslatedEnglish(safeDayTitle, translatedDayTitle),
-    looksLikeUntranslatedEnglish(safeContent, translatedContent)
+    looksLikeUntranslatedEnglish(title, tTitle),
+    looksLikeUntranslatedEnglish(day_title, tDay),
+    looksLikeUntranslatedEnglish(content, tContent)
   ].filter(Boolean).length;
 
   if (unchangedCount >= 2) {
-    throw new Error('Translation returned mostly unchanged English text');
+    throw new Error('Translation looks like English');
   }
 
   return {
-    title: translatedTitle,
-    day_title: translatedDayTitle,
-    content: translatedContent
+    title: tTitle,
+    day_title: tDay,
+    content: tContent
   };
 }
 
