@@ -5,6 +5,42 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Saint Rita of Cascia - St. Rita Parish</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .saint-figure {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 24px auto;
+      max-width: 360px;
+    }
+
+    .saint-figure img {
+      width: 100%;
+      border-radius: 16px;
+      box-shadow: 0 12px 32px rgba(15, 26, 43, 0.14);
+      border: 3px solid rgba(197, 164, 109, 0.35);
+      display: block;
+    }
+
+    .saint-figure figcaption {
+      margin-top: 10px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      text-align: center;
+      font-style: italic;
+    }
+
+    .saint-figure.wide {
+      max-width: 560px;
+    }
+
+    @media (max-width: 600px) {
+      .saint-figure,
+      .saint-figure.wide {
+        max-width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
   <header class="site-header">
@@ -27,8 +63,19 @@
   <main class="container">
     <button id="back-button" class="btn" aria-label="Go back" onclick="window.history.back()">Back</button>
     <h1 class="h1-about">Full History of Saint Rita of Cascia</h1>
-    <p><b>Saint of the Impossible | Patroness of Hopeless Cases</b></p>
-    <p><i>Feast Day: 22 May</i></p>
+    <p style="text-align:center;"><b>Saint of the Impossible | Patroness of Hopeless Cases</b></p>
+    <p style="text-align:center;"><i>Feast Day: 22 May</i></p>
+
+    <!-- Portrait at the top -->
+    <figure class="saint-figure">
+      <img
+        src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Saint_Rita_of_Cascia.jpg/400px-Saint_Rita_of_Cascia.jpg"
+        alt="Saint Rita of Cascia"
+        loading="lazy"
+        onerror="this.parentElement.style.display='none'"
+      />
+      <figcaption>Saint Rita of Cascia — Saint of the Impossible</figcaption>
+    </figure>
 
     <section>
       <h2>Historical Background</h2>
@@ -39,7 +86,8 @@
         God raised Saint Rita in this troubled society as a powerful witness
         to peace, patience, forgiveness, and trust in His mercy.
       </p>
-    </section><hr/>
+    </section>
+    <hr/>
 
     <section>
       <h2>Birth and Early Life</h2>
@@ -60,7 +108,8 @@
         According to tradition, bees surrounded her cradle without harming her,
         a sign of God's favor that remained remembered by the villagers.
       </p>
-    </section><hr/>
+    </section>
+    <hr/>
 
     <section>
       <h2>Marriage and Domestic Suffering</h2>
@@ -80,7 +129,8 @@
         Paolo eventually repented, abandoned violence,
         reconciled with his enemies, and became a loving husband.
       </p>
-    </section><hr/>
+    </section>
+    <hr/>
 
     <section>
       <h2>Widowhood and the Death of Her Sons</h2>
@@ -100,7 +150,8 @@
         Though deeply sorrowful, Rita accepted this painful answer
         as an act of God's mercy.
       </p>
-    </section><hr/>
+    </section>
+    <hr/>
 
     <section>
       <h2>Call to Religious Life and Entrance into the Convent</h2>
@@ -117,7 +168,8 @@
         and Saint Nicholas of Tolentino</b>,
         Rita was admitted into the convent.
       </p>
-    </section><hr/>
+    </section>
+    <hr/>
 
     <section>
       <h2>Life as an Augustinian Nun</h2>
@@ -130,7 +182,8 @@
         One famous act of obedience involved watering a dry vine daily,
         which later miraculously grew and continues to bear fruit today.
       </p>
-    </section><hr/>
+    </section>
+    <hr/>
 
     <section>
       <h2>The Stigma of the Thorn</h2>
@@ -146,7 +199,18 @@
         Rita accepted this suffering joyfully
         and offered it for the salvation of souls.
       </p>
-    </section><hr/>
+
+      <figure class="saint-figure">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Santa_Rita_da_Cascia%2C_Francesco_Trevisani.jpg/400px-Santa_Rita_da_Cascia%2C_Francesco_Trevisani.jpg"
+          alt="Saint Rita of Cascia bearing the wound of the thorn, painting by Francesco Trevisani"
+          loading="lazy"
+          onerror="this.parentElement.style.display='none'"
+        />
+        <figcaption>Saint Rita bearing the wound of the thorn — painting by Francesco Trevisani</figcaption>
+      </figure>
+    </section>
+    <hr/>
 
     <section>
       <h2>Final Years and Death</h2>
@@ -156,13 +220,25 @@
         Though it was winter, a <b>single rose bloomed</b>,
         a miracle that became one of her most famous symbols.
       </p>
+
+      <figure class="saint-figure">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Rosa_de_santa_Rita_de_Cassia.jpg/400px-Rosa_de_santa_Rita_de_Cassia.jpg"
+          alt="The rose of Saint Rita of Cascia"
+          loading="lazy"
+          onerror="this.parentElement.style.display='none'"
+        />
+        <figcaption>The rose — one of the most beloved symbols of Saint Rita</figcaption>
+      </figure>
+
       <p>
         Saint Rita died peacefully on <b>May 22, 1457</b>.
         At her death, her room was filled with a sweet fragrance,
         bells rang without human touch,
         and many miracles were reported.
       </p>
-    </section><hr/>
+    </section>
+    <hr/>
 
     <section>
       <h2>Canonization and Legacy</h2>
@@ -175,7 +251,18 @@
         Her body remains incorrupt and is venerated
         at the <b>Basilica of Saint Rita in Cascia, Italy</b>.
       </p>
-    </section><hr/>
+
+      <figure class="saint-figure wide">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Cascia_-_Santuario_di_Santa_Rita.jpg/560px-Cascia_-_Santuario_di_Santa_Rita.jpg"
+          alt="The Basilica of Saint Rita in Cascia, Italy"
+          loading="lazy"
+          onerror="this.parentElement.style.display='none'"
+        />
+        <figcaption>The Basilica of Saint Rita in Cascia, Italy — where her body is venerated today</figcaption>
+      </figure>
+    </section>
+    <hr/>
 
     <section>
       <h2>Patronage and Devotion</h2>
