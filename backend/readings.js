@@ -106,6 +106,7 @@ router.get('/', async (req, res) => {
           } catch (err) {
             translationWorked = false;
             console.error('[AUTO] Kiswahili translation failed, not caching sw rows:', err.message);
+            translatedRows.length = 0; // clear any partial translations
             break;
           }
         }

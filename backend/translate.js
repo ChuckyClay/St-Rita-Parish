@@ -78,25 +78,51 @@ async function translateReadingBlock({ title, content, day_title }) {
   const safeContent = String(content || '').trim();
   const safeDayTitle = String(day_title || '').trim();
 
-  const combined = [
-    '[[TITLE]]',
-    safeTitle,
-    '[[DAY]]',
-    safeDayTitle,
-    '[[CONTENT]]',
-    safeContent
-  ].join('\n');
+  // 🔥 Strong markers that won’t be translated
+  const combined = `
+<<<TITLE>>>
+${safeTitle}
+
+<<<DAY>>>
+${safeDayTitle}
+
+<<<CONTENT>>>
+${safeContent}
+`;
 
   const translated = await translateChunk(combined);
 
-  const translatedTitle = extractSection(translated, '[[TITLE]]', '[[DAY]]') || safeTitle;
-  const translatedDayTitle = extractSection(translated, '[[DAY]]', '[[CONTENT]]') || safeDayTitle;
-  const translatedContent = extractSection(translated, '[[CONTENT]]') || safeContent;
+  // 🔥 Extract safely
+  const getSection = (text, start, end) => {
+    const s = text.indexOf(start);
+    if (s === -1) return '';
+
+    const from = text.slice(s + start.length);
+    if (!end) return from.trim();
+
+    const e = from.indexOf(end);
+    return (e === -1 ? from : from.slice(0, e)).trim();
+  };
+
+  let tTitle = getSection(translated, '<<<TITLE>>>', '<<<DAY>>>');
+  let tDay = getSection(translated, '<<<DAY>>>', '<<<CONTENT>>>');
+  let tContent = getSection(translated, '<<<CONTENT>>>');
+
+  // 🔥 CLEANUP: remove garbage like [MAUDHUI]
+  const clean = (text) =>
+    text
+      .replace(/\[.*?\]/g, '') // remove [anything]
+      .replace(/<<<.*?>>>/g, '') // remove leftover markers
+      .trim();
+
+  tTitle = clean(tTitle) || safeTitle;
+  tDay = clean(tDay) || safeDayTitle;
+  tContent = clean(tContent) || safeContent;
 
   return {
-    title: translatedTitle,
-    day_title: translatedDayTitle,
-    content: translatedContent
+    title: tTitle,
+    day_title: tDay,
+    content: tContent
   };
 }
 
