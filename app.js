@@ -249,7 +249,7 @@ function showTyping() {
   const div = document.createElement('div');
   div.className = 'chatbot-message bot typing';
   div.id = 'typing-indicator';
-  div.textContent = 'Rita is typing...';
+  div.textContent = 'Thinking ...';
 
   box.appendChild(div);
   box.scrollTop = box.scrollHeight;
