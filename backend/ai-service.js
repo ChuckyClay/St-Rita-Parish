@@ -1,8 +1,20 @@
+const OpenAI = require('openai');
 const { GoogleGenAI } = require('@google/genai');
 
-function getClient() {
+function getGroqClient() {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) return null;
+
+  return new OpenAI({
+    apiKey,
+    baseURL: 'https://api.groq.com/openai/v1'
+  });
+}
+
+function getGeminiClient() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
+
   return new GoogleGenAI({ apiKey });
 }
 
@@ -33,12 +45,8 @@ ${readingText || 'None available.'}
 `.trim();
 }
 
-async function getCatholicChatResponse({ userMessage, parishContext }) {
-  const client = getClient();
-
-  if (!client) throw new Error('NO_GEMINI_API_KEY');
-
-  const prompt = `
+function buildPrompt({ userMessage, parishContext }) {
+  return `
 You are Rita, a Catholic assistant for St. Rita Parish.
 
 Rules:
@@ -50,42 +58,103 @@ Rules:
 - If the question concerns a personal sacramental or serious spiritual situation, answer carefully and recommend speaking with a priest.
 - Prefer parish-specific information when the question is about St. Rita Parish.
 - Keep answers concise but helpful.
+- Keep most answers under 150 words unless the user clearly asks for more detail.
 
 ${parishContext}
 
 User question:
 ${userMessage}
 `.trim();
+}
 
-  try {
-    const response = await client.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt
-    });
+function isGroqTemporaryFailure(err) {
+  const msg = String(err?.message || '').toLowerCase();
+  const code = String(err?.code || '').toLowerCase();
+  const status = Number(err?.status || 0);
 
-    return response.text || 'Sorry, I could not respond right now.';
-    
-  } catch (err) {
-    console.error('Gemini error:', err);
+  return (
+    status === 429 ||
+    status === 503 ||
+    msg.includes('rate limit') ||
+    msg.includes('quota') ||
+    msg.includes('resource exhausted') ||
+    code.includes('rate') ||
+    code.includes('quota')
+  );
+}
 
-    // Retry once if it's a 503
-    if (err?.message?.includes('503')) {
-      await new Promise(r => setTimeout(r, 1500));
-
-      try {
-        const retry = await client.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: prompt
-        });
-
-        return retry.text || 'Sorry, please try again.';
-      } catch (e) {
-        console.error('Retry failed:', e);
-      }
-    }
-
-    return 'Rita is a bit busy right now. Please try again in a moment.';
+async function askGroq(prompt) {
+  const client = getGroqClient();
+  if (!client) {
+    throw new Error('NO_GROQ_API_KEY');
   }
+
+  const response = await client.chat.completions.create({
+    model: 'llama-3.1-8b-instant',
+    messages: [
+      {
+        role: 'system',
+        content: 'You are Rita, a Catholic assistant for St. Rita Parish.'
+      },
+      {
+        role: 'user',
+        content: prompt
+      }
+    ],
+    temperature: 0.4,
+    max_tokens: 300
+  });
+
+  return response.choices?.[0]?.message?.content?.trim() || '';
+}
+
+async function askGemini(prompt) {
+  const client = getGeminiClient();
+  if (!client) {
+    throw new Error('NO_GEMINI_API_KEY');
+  }
+
+  const response = await client.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: prompt
+  });
+
+  return String(response.text || '').trim();
+}
+
+async function getCatholicChatResponse({ userMessage, parishContext }) {
+  const prompt = buildPrompt({ userMessage, parishContext });
+
+  // 1. Primary: Groq
+  try {
+    const groqReply = await askGroq(prompt);
+    if (groqReply) {
+      console.log('[AI] Groq success');
+      return groqReply;
+    }
+  } catch (err) {
+    console.warn('[AI] Groq failed:', err.message);
+
+    // If Groq failed for a reason that is not a temporary/free-tier issue,
+    // we still allow Gemini fallback because that is your desired structure.
+  }
+
+  // 2. Fallback: Gemini
+  try {
+    const geminiReply = await askGemini(prompt);
+    if (geminiReply) {
+      console.log('[AI] Gemini fallback success');
+      return geminiReply;
+    }
+  } catch (err) {
+    console.warn('[AI] Gemini fallback failed:', err.message);
+
+    if (err.message === 'NO_GEMINI_API_KEY') {
+      throw new Error('NO_FALLBACK_PROVIDER');
+    }
+  }
+
+  return 'Rita is a bit busy right now. Please try again in a moment.';
 }
 
 module.exports = {

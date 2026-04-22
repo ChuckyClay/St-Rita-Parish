@@ -55,7 +55,7 @@ router.post('/chat', async (req, res) => {
   } catch (err) {
       console.error('AI chat error:', err);
 
-      if (err.message === 'NO_GEMINI_API_KEY') {
+      if (err.message === 'NO_GROQ_API_KEY' || err.message === 'NO_GEMINI_API_KEY' || err.message === 'NO_FALLBACK_PROVIDER') {
           return res.json({
           reply: 'Rita is not configured yet. Please contact the administrator.'
           });
