@@ -146,6 +146,7 @@ router.get('/', async (req, res) => {
         return res.json({
           lang: 'en',
           fallback: true,
+          retry: true,
           message: 'Kiswahili translation is temporarily unavailable. Showing English readings instead.',
           readings: englishRows
         });
