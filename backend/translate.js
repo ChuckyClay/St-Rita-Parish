@@ -1,63 +1,35 @@
-const { spawn } = require('child_process');
+const fetch = require('node-fetch');
 
-function runOfflineTranslator(payload) {
-  return new Promise((resolve, reject) => {
-    const py = spawn('python3', ['offline_translate.py'], {
-      cwd: __dirname
-    });
+const MYMEMORY_URL = 'https://api.mymemory.translated.net/get';
+const EMAIL = process.env.MYMEMORY_EMAIL || '';
 
-    let stdout = '';
-    let stderr = '';
-
-    py.stdout.on('data', (data) => {
-      stdout += data.toString();
-    });
-
-    py.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    py.on('error', (err) => {
-      reject(err);
-    });
-
-    py.on('close', (code) => {
-      if (code !== 0) {
-        return reject(new Error(stderr || `offline_translate.py exited with code ${code}`));
-      }
-
-      try {
-        const parsed = JSON.parse(stdout);
-        resolve(parsed);
-      } catch (err) {
-        reject(new Error(`Failed to parse offline translation output: ${stdout}`));
-      }
-    });
-
-    py.stdin.write(JSON.stringify(payload));
-    py.stdin.end();
+async function translateText(text) {
+  const params = new URLSearchParams({
+    q: text,
+    langpair: 'en|sw',
   });
-}
 
-function looksLikeUntranslatedEnglish(original, translated) {
-  const o = String(original || '').trim().toLowerCase();
-  const t = String(translated || '').trim().toLowerCase();
+  if (EMAIL) params.append('de', EMAIL);
 
-  if (!o || !t) return false;
-  if (o === t) return true;
-  if (t.includes(o) || o.includes(t)) return true;
+  const res = await fetch(`${MYMEMORY_URL}?${params.toString()}`);
 
-  const englishSignals = [
-    'reading 1',
-    'responsorial psalm',
-    'gospel',
-    'alleluia',
-    'wednesday of the third week of easter',
-    'there broke out a severe persecution',
-    'jesus said to the crowds'
-  ];
+  if (!res.ok) {
+    throw new Error(`MyMemory request failed: ${res.status}`);
+  }
 
-  return englishSignals.filter(p => t.includes(p)).length >= 2;
+  const data = await res.json();
+
+  if (data.responseStatus !== 200) {
+    throw new Error(`MyMemory error: ${data.responseDetails || data.responseStatus}`);
+  }
+
+  const translated = String(data.responseData?.translatedText || '').trim();
+
+  if (!translated) {
+    throw new Error('MyMemory returned empty translation.');
+  }
+
+  return translated;
 }
 
 async function translateReadingBlock({ title, content, day_title }) {
@@ -65,33 +37,18 @@ async function translateReadingBlock({ title, content, day_title }) {
   const safeContent = String(content || '').trim();
   const safeDayTitle = String(day_title || '').trim();
 
-  const translated = await runOfflineTranslator({
-    title: safeTitle,
-    content: safeContent,
-    day_title: safeDayTitle
-  });
-
-  const translatedTitle = String(translated.title || '').trim() || safeTitle;
-  const translatedDayTitle = String(translated.day_title || '').trim() || safeDayTitle;
-  const translatedContent = String(translated.content || '').trim() || safeContent;
-
-  const unchangedCount = [
-    looksLikeUntranslatedEnglish(safeTitle, translatedTitle),
-    looksLikeUntranslatedEnglish(safeDayTitle, translatedDayTitle),
-    looksLikeUntranslatedEnglish(safeContent, translatedContent)
-  ].filter(Boolean).length;
-
-  if (unchangedCount >= 2) {
-    throw new Error('Offline translation returned mostly unchanged English text');
-  }
+  // Translate each field separately to stay within per-request limits
+  const [translatedTitle, translatedContent, translatedDayTitle] = await Promise.all([
+    safeTitle ? translateText(safeTitle) : Promise.resolve(''),
+    safeContent ? translateText(safeContent) : Promise.resolve(''),
+    safeDayTitle ? translateText(safeDayTitle) : Promise.resolve(''),
+  ]);
 
   return {
-    title: translatedTitle,
-    day_title: translatedDayTitle,
-    content: translatedContent
+    title: translatedTitle || safeTitle,
+    content: translatedContent || safeContent,
+    day_title: translatedDayTitle || safeDayTitle,
   };
 }
 
-module.exports = {
-  translateReadingBlock
-};
+module.exports = { translateReadingBlock };
