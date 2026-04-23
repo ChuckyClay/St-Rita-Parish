@@ -37,17 +37,30 @@ async function translateReadingBlock({ title, content, day_title }) {
   const safeContent = String(content || '').trim();
   const safeDayTitle = String(day_title || '').trim();
 
-  // Translate each field separately to stay within per-request limits
-  const [translatedTitle, translatedContent, translatedDayTitle] = await Promise.all([
-    safeTitle ? translateText(safeTitle) : Promise.resolve(''),
-    safeContent ? translateText(safeContent) : Promise.resolve(''),
-    safeDayTitle ? translateText(safeDayTitle) : Promise.resolve(''),
-  ]);
+  // Translate sequentially with delays to avoid burst rate limits
+  let translatedTitle = safeTitle;
+  let translatedContent = safeContent;
+  let translatedDayTitle = safeDayTitle;
+
+  if (safeTitle) {
+    translatedTitle = await translateText(safeTitle);
+    await new Promise(resolve => setTimeout(resolve, 800)); // 800ms delay
+  }
+
+  if (safeContent) {
+    translatedContent = await translateText(safeContent);
+    await new Promise(resolve => setTimeout(resolve, 800));
+  }
+
+  if (safeDayTitle) {
+    translatedDayTitle = await translateText(safeDayTitle);
+    await new Promise(resolve => setTimeout(resolve, 800));
+  }
 
   return {
-    title: translatedTitle || safeTitle,
-    content: translatedContent || safeContent,
-    day_title: translatedDayTitle || safeDayTitle,
+    title: translatedTitle,
+    content: translatedContent,
+    day_title: translatedDayTitle,
   };
 }
 
