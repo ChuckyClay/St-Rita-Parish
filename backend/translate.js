@@ -2,6 +2,7 @@ const fetch = require('node-fetch');
 
 const MYMEMORY_URL = 'https://api.mymemory.translated.net/get';
 const EMAIL = process.env.MYMEMORY_EMAIL || '';
+const DELAY_MS = 1500; // 1.5 seconds between requests
 
 async function translateText(text) {
   const params = new URLSearchParams({
@@ -37,24 +38,27 @@ async function translateReadingBlock({ title, content, day_title }) {
   const safeContent = String(content || '').trim();
   const safeDayTitle = String(day_title || '').trim();
 
-  // Translate sequentially with delays to avoid burst rate limits
+  // Translate sequentially with 1.5s delays to respect rate limits
   let translatedTitle = safeTitle;
   let translatedContent = safeContent;
   let translatedDayTitle = safeDayTitle;
 
+  // Small initial delay before first request
+  await new Promise(resolve => setTimeout(resolve, 500));
+
   if (safeTitle) {
     translatedTitle = await translateText(safeTitle);
-    await new Promise(resolve => setTimeout(resolve, 800)); // 800ms delay
+    await new Promise(resolve => setTimeout(resolve, DELAY_MS));
   }
 
   if (safeContent) {
     translatedContent = await translateText(safeContent);
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise(resolve => setTimeout(resolve, DELAY_MS));
   }
 
   if (safeDayTitle) {
     translatedDayTitle = await translateText(safeDayTitle);
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // No delay after last field since readings.js has its own delay between readings
   }
 
   return {
