@@ -6,38 +6,174 @@
   <title>Saint Rita of Cascia - St. Rita Parish</title>
   <link rel="stylesheet" href="styles.css">
   <style>
-    .saint-figure {
-      display: flex;
-      flex-direction: column;
+    .saint-page {
+      display: grid;
+      gap: 24px;
+    }
+
+    .saint-hero {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 24px;
       align-items: center;
-      margin: 24px auto;
-      max-width: 360px;
+      padding: 28px;
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at top right, rgba(197, 164, 109, 0.18), transparent 28%),
+        linear-gradient(135deg, rgba(15, 26, 43, 0.97), rgba(122, 31, 43, 0.92));
+      color: #fff;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .saint-hero h1 {
+      margin: 0 0 12px;
+      color: #fff;
+      font-size: 2.1rem;
+    }
+
+    .saint-hero .eyebrow {
+      display: inline-block;
+      margin-bottom: 10px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 1.1px;
+      text-transform: uppercase;
+      color: var(--gold-soft);
+    }
+
+    .saint-hero p {
+      color: rgba(255,255,255,0.92);
+    }
+
+    .saint-hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .saint-hero-image img {
+      width: 100%;
+      border-radius: 20px;
+      display: block;
+      border: 3px solid rgba(255,255,255,0.18);
+      box-shadow: 0 18px 34px rgba(0,0,0,0.18);
+    }
+
+    .saint-facts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+
+    .saint-fact {
+      background: var(--card-bg);
+      border: 1px solid rgba(197,164,109,0.18);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      padding: 18px;
+    }
+
+    .saint-fact span {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--brand);
+      margin-bottom: 6px;
+    }
+
+    .saint-fact strong {
+      display: block;
+      color: var(--navy);
+      font-size: 1rem;
+    }
+
+    .saint-story {
+      display: grid;
+      gap: 18px;
+    }
+
+    .saint-story-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(197,164,109,0.18);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      padding: 22px;
+    }
+
+    .saint-story-card h2 {
+      margin-bottom: 10px;
+    }
+
+    .saint-story-card p:last-child {
+      margin-bottom: 0;
+    }
+
+    .saint-story-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .saint-figure {
+      margin: 0;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(197,164,109,0.18);
+      border-radius: 18px;
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
     }
 
     .saint-figure img {
       width: 100%;
-      border-radius: 16px;
-      box-shadow: 0 12px 32px rgba(15, 26, 43, 0.14);
-      border: 3px solid rgba(197, 164, 109, 0.35);
       display: block;
+      max-height: 460px;
+      object-fit: cover;
     }
 
     .saint-figure figcaption {
-      margin-top: 10px;
-      font-size: 0.88rem;
+      padding: 12px 14px;
+      font-size: 0.9rem;
       color: var(--muted);
-      text-align: center;
       font-style: italic;
+      text-align: center;
+      background: #fff;
     }
 
-    .saint-figure.wide {
-      max-width: 560px;
+    .saint-highlight {
+      border-left: 4px solid var(--gold);
+      padding-left: 14px;
+      margin-top: 14px;
+      color: var(--muted);
+    }
+
+    .saint-patronage ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .saint-patronage li + li {
+      margin-top: 8px;
+    }
+
+    @media (max-width: 900px) {
+      .saint-hero,
+      .saint-story-split {
+        grid-template-columns: 1fr;
+      }
+
+      .saint-hero h1 {
+        font-size: 1.8rem;
+      }
     }
 
     @media (max-width: 600px) {
-      .saint-figure,
-      .saint-figure.wide {
-        max-width: 100%;
+      .saint-hero {
+        padding: 22px;
       }
     }
   </style>
@@ -47,7 +183,7 @@
     <div class="brand">
       <h1>St. Rita Parish</h1>
     </div>
-    <button id="menu-toggle" class="menu-toggle">☰</button>
+    <button id="menu-toggle" class="menu-toggle" aria-label="Toggle navigation menu">☰</button>
     <nav>
       <a href="index.html">Home</a>
       <a href="about.html" class="active">About</a>
@@ -60,226 +196,260 @@
     </nav>
   </header>
 
-  <main class="container">
-    <button id="back-button" class="btn" aria-label="Go back" onclick="window.history.back()">Back</button>
-    <h1 class="h1-about">Full History of Saint Rita of Cascia</h1>
-    <p style="text-align:center;"><b>Saint of the Impossible | Patroness of Hopeless Cases</b></p>
-    <p style="text-align:center;"><i>Feast Day: 22 May</i></p>
+  <main class="container saint-page">
+    <section class="saint-hero fade-up">
+      <div>
+        <span class="eyebrow">Saint of the Impossible</span>
+        <h1>Saint Rita of Cascia</h1>
+        <p>
+          A powerful witness of forgiveness, patience, prayer, and hope.
+          Saint Rita remains one of the Church’s most beloved saints,
+          especially for those facing impossible or deeply painful situations.
+        </p>
+        <p><strong>Feast Day:</strong> 22 May</p>
 
-    <!-- Portrait at the top -->
-    <figure class="saint-figure">
-      <img
-        src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Saint_Rita_of_Cascia.jpg/400px-Saint_Rita_of_Cascia.jpg"
-        alt="Saint Rita of Cascia"
-        loading="lazy"
-        onerror="this.parentElement.style.display='none'"
-      />
-      <figcaption>Saint Rita of Cascia — Saint of the Impossible</figcaption>
-    </figure>
+        <div class="saint-hero-actions">
+          <button class="btn" onclick="window.history.back()">Back</button>
+          <a href="about.html" class="btn btn-outline">Back to About</a>
+        </div>
+      </div>
 
-    <section>
-      <h2>Historical Background</h2>
-      <p>
-        Saint Rita lived during the late 14th and 15th centuries in central Italy,
-        a time marked by political instability, violence, and family feuds.
-        Revenge killings were common, and forgiveness was rare.
-        God raised Saint Rita in this troubled society as a powerful witness
-        to peace, patience, forgiveness, and trust in His mercy.
-      </p>
-    </section>
-    <hr/>
-
-    <section>
-      <h2>Birth and Early Life</h2>
-      <p>
-        Saint Rita was born around <b>1381</b> in the village of <b>Roccaporena</b>,
-        near <b>Cascia in Umbria, Italy</b>. Her baptismal name was
-        <b>Margherita Lotti</b>.
-      </p>
-      <p>
-        Her parents, <b>Antonio and Amata Lotti</b>, were devout Catholics
-        and respected peacemakers who often reconciled feuding families.
-        They were elderly and childless for many years, and Rita was
-        received as a special gift from God.
-      </p>
-      <p>
-        From childhood, Rita showed a deep love for prayer and solitude
-        and expressed a strong desire to become a nun.
-        According to tradition, bees surrounded her cradle without harming her,
-        a sign of God's favor that remained remembered by the villagers.
-      </p>
-    </section>
-    <hr/>
-
-    <section>
-      <h2>Marriage and Domestic Suffering</h2>
-      <p>
-        In obedience to her parents and the customs of the time,
-        Rita was married at a young age to <b>Paolo Mancini</b>,
-        a man known for his violent temper and immoral life.
-      </p>
-      <p>
-        For <b>18 years</b>, Rita endured physical abuse, emotional suffering,
-        and humiliation. She never responded with anger or revenge.
-        Instead, she remained faithful, patient, and prayerful,
-        offering her suffering to God.
-      </p>
-      <p>
-        Through Rita's constant prayer and forgiveness,
-        Paolo eventually repented, abandoned violence,
-        reconciled with his enemies, and became a loving husband.
-      </p>
-    </section>
-    <hr/>
-
-    <section>
-      <h2>Widowhood and the Death of Her Sons</h2>
-      <p>
-        Despite his conversion, Paolo was later <b>murdered</b>
-        by enemies from past feuds.
-        Rita was left a widow with <b>two sons</b>.
-      </p>
-      <p>
-        Her sons desired revenge for their father's death.
-        Fearing for their souls, Rita prayed intensely that God
-        would prevent them from committing mortal sin,
-        even if it meant their death.
-      </p>
-      <p>
-        Both sons later <b>died of illness</b>, reconciled with God and their mother.
-        Though deeply sorrowful, Rita accepted this painful answer
-        as an act of God's mercy.
-      </p>
-    </section>
-    <hr/>
-
-    <section>
-      <h2>Call to Religious Life and Entrance into the Convent</h2>
-      <p>
-        After losing her entire family, Rita sought to join the
-        <b>Augustinian convent of Saint Mary Magdalene in Cascia</b>.
-        She was initially refused because she was a widow
-        and because of her husband's violent past.
-      </p>
-      <p>
-        Through perseverance and prayer, and according to tradition
-        through a miraculous intervention of
-        <b>Saint Augustine, Saint John the Baptist,
-        and Saint Nicholas of Tolentino</b>,
-        Rita was admitted into the convent.
-      </p>
-    </section>
-    <hr/>
-
-    <section>
-      <h2>Life as an Augustinian Nun</h2>
-      <p>
-        Saint Rita lived in the convent for about <b>40 years</b>.
-        Her life was marked by deep prayer, obedience,
-        humility, fasting, penance, and service to the sick and poor.
-      </p>
-      <p>
-        One famous act of obedience involved watering a dry vine daily,
-        which later miraculously grew and continues to bear fruit today.
-      </p>
-    </section>
-    <hr/>
-
-    <section>
-      <h2>The Stigma of the Thorn</h2>
-      <p>
-        While praying before a crucifix, Rita asked to share
-        in the suffering of Christ.
-        She received a <b>wound on her forehead</b>,
-        believed to be from one of the thorns of Christ's crown.
-      </p>
-      <p>
-        The wound caused her great pain and isolation
-        and remained with her for about <b>15 years</b>.
-        Rita accepted this suffering joyfully
-        and offered it for the salvation of souls.
-      </p>
-
-      <figure class="saint-figure">
+      <div class="saint-hero-image">
         <img
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Santa_Rita_da_Cascia%2C_Francesco_Trevisani.jpg/400px-Santa_Rita_da_Cascia%2C_Francesco_Trevisani.jpg"
-          alt="Saint Rita of Cascia bearing the wound of the thorn, painting by Francesco Trevisani"
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Saint_Rita_of_Cascia.jpg/600px-Saint_Rita_of_Cascia.jpg"
+          alt="Saint Rita of Cascia"
           loading="lazy"
           onerror="this.parentElement.style.display='none'"
         />
-        <figcaption>Saint Rita bearing the wound of the thorn — painting by Francesco Trevisani</figcaption>
-      </figure>
+      </div>
     </section>
-    <hr/>
 
-    <section>
-      <h2>Final Years and Death</h2>
-      <p>
-        In her final years, Saint Rita became weak and bedridden.
-        During winter, she requested a rose from her family garden.
-        Though it was winter, a <b>single rose bloomed</b>,
-        a miracle that became one of her most famous symbols.
-      </p>
-
-      <figure class="saint-figure">
-        <img
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Rosa_de_santa_Rita_de_Cassia.jpg/400px-Rosa_de_santa_Rita_de_Cassia.jpg"
-          alt="The rose of Saint Rita of Cascia"
-          loading="lazy"
-          onerror="this.parentElement.style.display='none'"
-        />
-        <figcaption>The rose — one of the most beloved symbols of Saint Rita</figcaption>
-      </figure>
-
-      <p>
-        Saint Rita died peacefully on <b>May 22, 1457</b>.
-        At her death, her room was filled with a sweet fragrance,
-        bells rang without human touch,
-        and many miracles were reported.
-      </p>
+    <section class="saint-facts fade-up delay-1">
+      <div class="saint-fact">
+        <span>Birth</span>
+        <strong>c. 1381</strong>
+      </div>
+      <div class="saint-fact">
+        <span>Birthplace</span>
+        <strong>Roccaporena, Cascia, Italy</strong>
+      </div>
+      <div class="saint-fact">
+        <span>Death</span>
+        <strong>22 May 1457</strong>
+      </div>
+      <div class="saint-fact">
+        <span>Canonized</span>
+        <strong>1900 by Pope Leo XIII</strong>
+      </div>
+      <div class="saint-fact">
+        <span>Known For</span>
+        <strong>Impossible causes, forgiveness, peace</strong>
+      </div>
     </section>
-    <hr/>
 
-    <section>
-      <h2>Canonization and Legacy</h2>
-      <p>
-        Saint Rita was canonized in <b>1900</b>
-        by <b>Pope Leo XIII</b>, who called her
-        <i>"The Pearl of Umbria."</i>
-      </p>
-      <p>
-        Her body remains incorrupt and is venerated
-        at the <b>Basilica of Saint Rita in Cascia, Italy</b>.
-      </p>
+    <section class="saint-story">
+      <div class="saint-story-card fade-up delay-1">
+        <h2>Historical Background</h2>
+        <p>
+          Saint Rita lived during the late 14th and 15th centuries in central Italy,
+          a time marked by political instability, violence, and family feuds.
+          Revenge killings were common, and forgiveness was rare.
+          God raised Saint Rita in this troubled society as a powerful witness
+          to peace, patience, forgiveness, and trust in His mercy.
+        </p>
+      </div>
 
-      <figure class="saint-figure wide">
+      <div class="saint-story-card fade-up delay-1">
+        <h2>Birth and Early Life</h2>
+        <p>
+          Saint Rita was born around <b>1381</b> in the village of <b>Roccaporena</b>,
+          near <b>Cascia in Umbria, Italy</b>. Her baptismal name was
+          <b>Margherita Lotti</b>.
+        </p>
+        <p>
+          Her parents, <b>Antonio and Amata Lotti</b>, were devout Catholics
+          and respected peacemakers who often reconciled feuding families.
+          They were elderly and childless for many years, and Rita was
+          received as a special gift from God.
+        </p>
+        <p>
+          From childhood, Rita showed a deep love for prayer and solitude
+          and expressed a strong desire to become a nun.
+          According to tradition, bees surrounded her cradle without harming her,
+          a sign of God's favor that remained remembered by the villagers.
+        </p>
+      </div>
+
+      <div class="saint-story-split fade-up delay-2">
+        <div class="saint-story-card">
+          <h2>Marriage and Domestic Suffering</h2>
+          <p>
+            In obedience to her parents and the customs of the time,
+            Rita was married at a young age to <b>Paolo Mancini</b>,
+            a man known for his violent temper and immoral life.
+          </p>
+          <p>
+            For <b>18 years</b>, Rita endured physical abuse, emotional suffering,
+            and humiliation. She never responded with anger or revenge.
+            Instead, she remained faithful, patient, and prayerful,
+            offering her suffering to God.
+          </p>
+          <p>
+            Through Rita's constant prayer and forgiveness,
+            Paolo eventually repented, abandoned violence,
+            reconciled with his enemies, and became a loving husband.
+          </p>
+        </div>
+
+        <div class="saint-story-card">
+          <h2>Widowhood and the Death of Her Sons</h2>
+          <p>
+            Despite his conversion, Paolo was later <b>murdered</b>
+            by enemies from past feuds. Rita was left a widow with <b>two sons</b>.
+          </p>
+          <p>
+            Her sons desired revenge for their father's death.
+            Fearing for their souls, Rita prayed intensely that God
+            would prevent them from committing mortal sin,
+            even if it meant their death.
+          </p>
+          <p>
+            Both sons later <b>died of illness</b>, reconciled with God and their mother.
+            Though deeply sorrowful, Rita accepted this painful answer
+            as an act of God's mercy.
+          </p>
+        </div>
+      </div>
+
+      <div class="saint-story-card fade-up delay-2">
+        <h2>Call to Religious Life and Entrance into the Convent</h2>
+        <p>
+          After losing her entire family, Rita sought to join the
+          <b>Augustinian convent of Saint Mary Magdalene in Cascia</b>.
+          She was initially refused because she was a widow
+          and because of her husband's violent past.
+        </p>
+        <p>
+          Through perseverance and prayer, and according to tradition
+          through a miraculous intervention of
+          <b>Saint Augustine, Saint John the Baptist,
+          and Saint Nicholas of Tolentino</b>,
+          Rita was admitted into the convent.
+        </p>
+      </div>
+
+      <div class="saint-story-split fade-up delay-3">
+        <div class="saint-story-card">
+          <h2>Life as an Augustinian Nun</h2>
+          <p>
+            Saint Rita lived in the convent for about <b>40 years</b>.
+            Her life was marked by deep prayer, obedience,
+            humility, fasting, penance, and service to the sick and poor.
+          </p>
+          <p>
+            One famous act of obedience involved watering a dry vine daily,
+            which later miraculously grew and continues to bear fruit today.
+          </p>
+          <p class="saint-highlight">
+            Her holiness was not in comfort, but in quiet endurance,
+            service, and complete trust in God.
+          </p>
+        </div>
+
+        <figure class="saint-figure">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Santa_Rita_da_Cascia%2C_Francesco_Trevisani.jpg/600px-Santa_Rita_da_Cascia%2C_Francesco_Trevisani.jpg"
+            alt="Saint Rita of Cascia bearing the wound of the thorn"
+            loading="lazy"
+            onerror="this.parentElement.style.display='none'"
+          />
+          <figcaption>Saint Rita bearing the wound of the thorn</figcaption>
+        </figure>
+      </div>
+
+      <div class="saint-story-card fade-up delay-3">
+        <h2>The Stigma of the Thorn</h2>
+        <p>
+          While praying before a crucifix, Rita asked to share
+          in the suffering of Christ.
+          She received a <b>wound on her forehead</b>,
+          believed to be from one of the thorns of Christ's crown.
+        </p>
+        <p>
+          The wound caused her great pain and isolation
+          and remained with her for about <b>15 years</b>.
+          Rita accepted this suffering joyfully
+          and offered it for the salvation of souls.
+        </p>
+      </div>
+
+      <div class="saint-story-split fade-up delay-3">
+        <div class="saint-story-card">
+          <h2>Final Years and Death</h2>
+          <p>
+            In her final years, Saint Rita became weak and bedridden.
+            During winter, she requested a rose from her family garden.
+            Though it was winter, a <b>single rose bloomed</b>,
+            a miracle that became one of her most famous symbols.
+          </p>
+          <p>
+            Saint Rita died peacefully on <b>May 22, 1457</b>.
+            At her death, her room was filled with a sweet fragrance,
+            bells rang without human touch,
+            and many miracles were reported.
+          </p>
+        </div>
+
+        <figure class="saint-figure">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Rosa_de_santa_Rita_de_Cassia.jpg/600px-Rosa_de_santa_Rita_de_Cassia.jpg"
+            alt="The rose of Saint Rita of Cascia"
+            loading="lazy"
+            onerror="this.parentElement.style.display='none'"
+          />
+          <figcaption>The rose — one of the most beloved symbols of Saint Rita</figcaption>
+        </figure>
+      </div>
+
+      <div class="saint-story-card fade-up delay-3">
+        <h2>Canonization and Legacy</h2>
+        <p>
+          Saint Rita was canonized in <b>1900</b>
+          by <b>Pope Leo XIII</b>, who called her
+          <i>"The Pearl of Umbria."</i>
+        </p>
+        <p>
+          Her body remains incorrupt and is venerated
+          at the <b>Basilica of Saint Rita in Cascia, Italy</b>.
+        </p>
+      </div>
+
+      <figure class="saint-figure fade-up delay-3">
         <img
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Cascia_-_Santuario_di_Santa_Rita.jpg/560px-Cascia_-_Santuario_di_Santa_Rita.jpg"
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Cascia_-_Santuario_di_Santa_Rita.jpg/900px-Cascia_-_Santuario_di_Santa_Rita.jpg"
           alt="The Basilica of Saint Rita in Cascia, Italy"
           loading="lazy"
           onerror="this.parentElement.style.display='none'"
         />
         <figcaption>The Basilica of Saint Rita in Cascia, Italy — where her body is venerated today</figcaption>
       </figure>
-    </section>
-    <hr/>
 
-    <section>
-      <h2>Patronage and Devotion</h2>
-      <p>Saint Rita is the patron saint of:</p>
-      <ul>
-        <li>Impossible and desperate cases</li>
-        <li>Troubled marriages and families</li>
-        <li>Widows</li>
-        <li>Mothers</li>
-        <li>Victims of abuse</li>
-        <li>Forgiveness and reconciliation</li>
-      </ul>
-      <p>
-        Her feast day is <b>May 22</b>.
-        She is often associated with roses,
-        symbolizing hope, healing, and God's mercy.
-      </p>
+      <div class="saint-story-card saint-patronage fade-up delay-3">
+        <h2>Patronage and Devotion</h2>
+        <p>Saint Rita is the patron saint of:</p>
+        <ul>
+          <li>Impossible and desperate cases</li>
+          <li>Troubled marriages and families</li>
+          <li>Widows</li>
+          <li>Mothers</li>
+          <li>Victims of abuse</li>
+          <li>Forgiveness and reconciliation</li>
+        </ul>
+        <p style="margin-top:14px;">
+          Her feast day is <b>May 22</b>. She is often associated with roses,
+          symbolizing hope, healing, and God’s mercy.
+        </p>
+      </div>
     </section>
   </main>
 
