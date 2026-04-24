@@ -891,3 +891,9 @@ hr {
   font-style: italic;
   opacity: 0.7;
 }
+
+.countdown {
+  margin-top: 10px;
+  font-weight: bold;
+  color: #b22222; /* Catholic red vibe */
+}
