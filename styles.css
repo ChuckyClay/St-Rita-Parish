@@ -103,11 +103,25 @@ select:focus {
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
 }
 
-.site-header .brand {
+.header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
 }
+
+.logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  margin-right: 10px;
+}
+
+.brand h1 {
+  font-size: 20px;
+  margin: 0;
+}
+
 
 .site-header h1 {
   margin: 0;
@@ -423,6 +437,23 @@ button:hover {
 
 .btn-outline:hover {
   background: rgba(255, 255, 255, 0.10);
+}
+
+.directions-btn {
+  display: inline-block;
+  margin-top: 12px;
+  background: var(--navy-soft);
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: 0.3s ease;
+}
+
+.directions-btn:hover {
+  background: var(--navy);
+  color: #fff;
 }
 
 /* =========================

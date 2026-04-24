@@ -6,11 +6,16 @@
   <title>Contact - St. Rita Parish</title>
   <meta name="description" content="Contact St. Rita Parish for inquiries, prayer requests, or parish information." />
   <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 </head>
 <body>
   <header class="site-header">
-    <div class="brand">
-      <h1>St. Rita Parish</h1>
+    <div class="header-left">
+       <img src="images/rita-favicon.jpeg" alt="St. Rita Parish - Nchiru" class="logo-img">
+       <h1>St. Rita Parish</h1>
     </div>
     <button id="menu-toggle" class="menu-toggle" aria-label="Toggle navigation menu">☰</button>
     <nav>
@@ -72,13 +77,18 @@
 
         <div class="card">
           <h3>Location</h3>
-          <p class="meta">Update this map embed with the real parish location when ready.</p>
           <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.1!2d-73.9!3d40.7!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDAuNzAwMDAw!5e0!3m2!1sen!2sus!4v1234567890"
+            src="https://www.google.com/maps?q=0.124483,37.717011&output=embed"
             height="320"
             allowfullscreen=""
             loading="lazy">
           </iframe>
+          <a href="https://www.google.com/maps/dir/?api=1&destination=0.124483,37.717011"
+            target="_blank"
+            class="directions-btn"
+          >
+            Get Directions
+          </a>
         </div>
       </div>
     </section>
