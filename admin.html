@@ -126,6 +126,20 @@
           <ul id="phone-list" class="list"></ul>
         </section>
 
+        <!-- Contact Messages -->
+        <section class="card admin-card">
+          <h3 class="admin-title">Contact Messages</h3>
+
+          <p class="small muted">Messages sent by parishioners through the contact form.</p>
+
+          <button id="refresh-messages-btn" class="admin-btn" style="margin-bottom:10px;">
+            Refresh Messages
+          </button><br>
+          <input type="text" id="message-search" placeholder="Search by name or phone..." />
+
+          <ul id="contact-messages-list" class="list"></ul>
+        </section>
+
         <!-- Fetch Readings -->
         <section class="card admin-card">
           <h3 class="admin-title">Daily Readings</h3>
@@ -729,12 +743,105 @@
       }
     });
 
+    // CONTACT MESSAGES
+    function renderMessageItem(m) {
+      const unread = m.is_read === 0;
+
+      return `
+        <li style="
+          margin-bottom:12px;
+          padding:10px;
+          border-left:4px solid ${unread ? 'red' : 'green'};
+          background:${unread ? '#fff6f6' : '#f6fff6'};
+        ">
+          <b>${escapeHtml(m.name)}</b>
+          ${unread ? '<span style="color:red; font-weight:bold;"> NEW</span>' : ''}<br>
+
+          <span class="small muted">${escapeHtml(m.phone)}</span><br>
+          <p>${escapeHtml(m.message)}</p>
+
+          <span class="small muted">
+            ${new Date(m.created_at).toLocaleString()}
+          </span><br><br>
+
+          <button class="admin-btn" style="padding:8px 14px; margin-right:6px;"
+            onclick="markAsRead(${m.id})">
+            Mark as Read
+          </button>
+
+          <button class="admin-btn" style="padding:8px 14px;"
+            onclick="deleteContactMessage(${m.id})">
+            Delete
+          </button>
+        </li>
+      `;
+    }
+
+    async function loadContactMessages() {
+      const list = document.getElementById('contact-messages-list');
+      list.innerHTML = '<li>Loading messages...</li>';
+
+      try {
+        const messages = await apiFetch('/api/contact-messages', {}, true);
+
+        if (!messages.length) {
+          list.innerHTML = '<li>No messages found.</li>';
+          return;
+        }
+
+        list.innerHTML = messages.map(renderMessageItem).join('');
+      } catch (err) {
+        list.innerHTML = `<li style="color:red;">${escapeHtml(err.message)}</li>`;
+      }
+    }
+
+    document.getElementById('refresh-messages-btn').addEventListener('click', async function () {
+      await loadContactMessages();
+    });
+
+    document.getElementById('message-search').addEventListener('input', function () {
+      const q = this.value.toLowerCase();
+      const items = document.querySelectorAll('#contact-messages-list li');
+
+      items.forEach(li => {
+        const text = li.innerText.toLowerCase();
+        li.style.display = text.includes(q) ? '' : 'none';
+      });
+    });
+
+    window.deleteContactMessage = async function(id) {
+      if (!confirm('Delete this message?')) return;
+
+      try {
+        await apiFetch(`/api/contact-messages/${id}`, {
+          method: 'DELETE'
+        }, true);
+
+        await loadContactMessages();
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+
+    window.markAsRead = async function(id) {
+      try {
+        await apiFetch(`/api/contact-messages/${id}/mark-read`, {
+          method: 'POST'
+        }, true);
+
+        await loadContactMessages();
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+
     async function loadAllAdminData() {
       await Promise.all([
         loadAnnouncements(),
         loadEvents(),
         renderPhoneList(),
-        loadBackups()
+        loadBackups(),
+        loadContactMessages()
       ]);
     }
 

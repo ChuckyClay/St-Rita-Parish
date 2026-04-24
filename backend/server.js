@@ -20,6 +20,7 @@ const messagesRouter = require('./messages');
 const announcementsRouter = require('./announcements');
 const eventsRouter = require('./events');
 const readingsRouter = require('./readings');
+const contactMessagesRouter = require('./contactMessages');
 const fetchAndStoreReadings = require('./readings-fetcher');
 const fetchAndStoreReadingsSw = require('./readings-fetcher-sw');
 const aiRoutes = require('./ai-routes');
@@ -99,6 +100,9 @@ app.use('/api/events', (req, res, next) => {
 
 // Readings
 app.use('/api/readings', readingsRouter);
+
+// Contact messages
+app.use('/api/contact-messages', contactMessagesRouter);
 
 // AI routes
 app.use('/api/ai', aiRoutes);
