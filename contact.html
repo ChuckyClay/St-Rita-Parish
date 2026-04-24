@@ -106,23 +106,33 @@
   <script>
     const PAGE_API_BASE = 'https://st-rita-parish.onrender.com';
 
-    document.getElementById("contactForm").addEventListener("submit",async (e) => {
+    document.getElementById("contactForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const formData = {
-        name: e.target.name.value,
-        phone: e.target.phone.value,
-        message: e.target.message.value
-      };
+      const name = e.target.name.value.trim();
+      const phone = e.target.phone.value.trim();
+      const message = e.target.message.value.trim();
 
-      const res = await fetch("/api/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
-      });
+      const status = document.getElementById("status");
 
-      const data = await res.json();
-      document.getElementById("status").innerText = data.message;
+      try {
+        const res = await fetch(`${API_BASE}/api/contact-messages`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ name, phone, message })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.message || "Failed");
+
+        status.innerText = "Message sent successfully!";
+        e.target.reset();
+      } catch (err) {
+        status.innerText = err.message;
+      }
     });
 
     document.getElementById('sms-form').addEventListener('submit', async (e) => {
