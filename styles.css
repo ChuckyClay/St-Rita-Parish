@@ -897,3 +897,13 @@ hr {
   font-weight: bold;
   color: #b22222; /* Catholic red vibe */
 }
+
+.event-started {
+  color: green;
+  font-weight: bold;
+}
+
+.event-ended {
+  color: gray;
+  font-weight: bold;
+}

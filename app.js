@@ -200,24 +200,46 @@ function startCountdowns() {
     const date = el.getAttribute('data-date');
     const time = el.getAttribute('data-time') || "00:00";
 
+    // Combine date + time properly
     const eventDateTime = new Date(`${date}T${time}`).getTime();
+
+    // Set an end time 5 hours after the event starts
+    const endTime = eventDateTime + (5 * 60 * 60 * 1000);
 
     const interval = setInterval(() => {
       const now = new Date().getTime();
       const distance = eventDateTime - now;
-
-      if (distance <= 0) {
-        clearInterval(interval);
-        el.innerHTML = "Event Started";
-        return;
-      }
 
       const days = Math.floor(distance / (1000 * 60 * 60 * 24));
       const hours = Math.floor((distance / (1000 * 60 * 60)) % 24);
       const minutes = Math.floor((distance / (1000 * 60)) % 60);
       const seconds = Math.floor((distance / 1000) % 60);
 
-      el.innerHTML = `Starts in ${days}d ${hours}h ${minutes}m ${seconds}s`;
+      if (now >= endTime) {
+        clearInterval(interval);
+        el.innerHTML = `<span class="event-ended">⚫ Event Ended</span>`;
+        return;
+      }
+
+      if (now >= eventDateTime) {
+        clearInterval(interval);
+        el.innerHTML = `<span class="event-started">🟢 Event Started</span>`;
+        return;
+      }
+
+      if (days > 0) {
+        el.innerHTML = `Starts in: ${days}d ${hours}h ${minutes}m`;
+      } 
+      else if (hours > 0) {
+        el.innerHTML = `Starts in: ${hours}h ${minutes}m ${seconds}s`;
+      } 
+      else if (minutes > 0) {
+        el.innerHTML = `🔴 Starting Soon: ${minutes}m ${seconds}s`;
+      } 
+      else {
+        el.innerHTML = `⚡ Few Seconds: ${seconds}s`;
+      }
+
     }, 1000);
   });
 }
