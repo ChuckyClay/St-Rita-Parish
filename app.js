@@ -168,20 +168,57 @@ async function loadEventsPreview() {
 
     const top = events.slice(0, 3);
 
-    container.innerHTML = top.map(e => `
+    container.innerHTML = events.map(event => `
       <div class="card">
-        <h3>${escapeHtml(e.title)}</h3>
+        <h3>${event.title}</h3>
+
         <p class="meta">
-          ${new Date(e.date).toLocaleDateString()}
-          ${e.time ? ` • ${escapeHtml(e.time)}` : ''}
+          ${new Date(event.date).toLocaleDateString()} 
+          ${event.time ? `• ${event.time}` : ''}
         </p>
-        <p>${escapeHtml((e.description || '').slice(0, 120))}...</p>
+
+        <p>${event.description}</p>
+
+        <div class="countdown" 
+            data-date="${event.date}" 
+            data-time="${event.time}">
+          Loading timer...
+        </div>
       </div>
     `).join('');
   } catch (err) {
     console.error('Events preview error:', err);
     setError(container, 'Unable to load events.');
   }
+}
+
+function startCountdowns() {
+  const elements = document.querySelectorAll('.countdown');
+
+  elements.forEach(el => {
+    const date = el.getAttribute('data-date');
+    const time = el.getAttribute('data-time') || "00:00";
+
+    const eventDateTime = new Date(`${date}T${time}`).getTime();
+
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = eventDateTime - now;
+
+      if (distance <= 0) {
+        clearInterval(interval);
+        el.innerHTML = "Event Started";
+        return;
+      }
+
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((distance / (1000 * 60)) % 60);
+      const seconds = Math.floor((distance / 1000) % 60);
+
+      el.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    }, 1000);
+  });
 }
 
 /* =========================
