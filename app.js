@@ -186,6 +186,7 @@ async function loadEventsPreview() {
         </div>
       </div>
     `).join('');
+    startCountdowns();
   } catch (err) {
     console.error('Events preview error:', err);
     setError(container, 'Unable to load events.');
@@ -220,8 +221,6 @@ function startCountdowns() {
     }, 1000);
   });
 }
-
-startCountdowns();
 
 /* =========================
    CHATBOT INJECTION
