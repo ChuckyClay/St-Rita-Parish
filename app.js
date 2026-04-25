@@ -221,6 +221,8 @@ function startCountdowns() {
   });
 }
 
+startCountdowns();
+
 /* =========================
    CHATBOT INJECTION
 ========================= */
