@@ -228,7 +228,7 @@ function startCountdowns() {
       }
 
       if (days > 0) {
-        el.innerHTML = `Starts in: ${days}d ${hours}h ${minutes}m`;
+        el.innerHTML = `Starts in: ${days}d ${hours}h ${minutes}m ${seconds}s`;
       } 
       else if (hours > 0) {
         el.innerHTML = `Starts in: ${hours}h ${minutes}m ${seconds}s`;

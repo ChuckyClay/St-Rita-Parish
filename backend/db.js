@@ -1,7 +1,8 @@
 const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const { getDatabasePath, ensureDatabaseDirectory } = require('./storage');
 
-const dbPath = path.join(__dirname, 'parish.sqlite');
+const dbPath = getDatabasePath();
+ensureDatabaseDirectory(dbPath);
 const db = new sqlite3.Database(dbPath);
 
 function runAsync(sql, params = []) {

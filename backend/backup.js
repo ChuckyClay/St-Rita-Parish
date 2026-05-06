@@ -1,7 +1,8 @@
 const fs = require('fs');
 const path = require('path');
+const { getDatabasePath } = require('./storage');
 
-const dbPath = path.join(__dirname, 'parish.sqlite');
+const dbPath = getDatabasePath();
 const backupDir = path.join(__dirname, 'backups');
 const MAX_BACKUPS = 10;
 

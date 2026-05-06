@@ -7,6 +7,7 @@
 
 ## 2. Environment & Configuration
 - [ ] Set environment variables for production (e.g., database path, API keys)
+- [ ] Set `DATABASE_PATH` to a persistent location on hosted deployments
 - [ ] Update API URLs in frontend to use deployed backend URL
 - [ ] Ensure CORS is enabled for frontend-backend communication
 - [ ] Set up HTTPS (automatic on most platforms)
