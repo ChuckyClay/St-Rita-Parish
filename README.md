@@ -13,7 +13,7 @@ Production-ready Catholic parish website with:
 
 1. Install dependencies: `npm install` (in backend)
 2. Set up `.env` with secrets (see backend/.env.example)
-3. Set `DATABASE_PATH` on hosted deployments if you need SQLite persistence outside the repo folder
+3. Set `DATABASE_PATH` on hosted deployments if you need SQLite persistence outside the repo folder. On Render, add a persistent disk and point `DATABASE_PATH` (or `RENDER_DISK_MOUNT_PATH`) at that mount.
 4. Start backend: `node backend/server.js`
 5. Start readings cron: `node backend/cron.js`
 6. Open `index.html` in your browser
