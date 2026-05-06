@@ -907,3 +907,10 @@ hr {
   color: gray;
   font-weight: bold;
 }
+
+.parish-image {
+  margin: 24px 0;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
