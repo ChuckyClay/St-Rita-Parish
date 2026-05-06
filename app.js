@@ -31,6 +31,51 @@ function setEmpty(container, text = 'No data available.') {
   container.innerHTML = `<div class="card"><p>${escapeHtml(text)}</p></div>`;
 }
 
+function initDonateAutomation() {
+  const form = document.getElementById('donate-form');
+  const amountInput = document.getElementById('donate-amount');
+  const purposeInput = document.getElementById('donate-purpose');
+  const statusOutput = document.getElementById('donate-status');
+  const copyButton = document.getElementById('copy-donate-details');
+  const paybillNumber = document.getElementById('paybill-number');
+  const paybillAccount = document.getElementById('paybill-account');
+
+  if (!form || !amountInput || !purposeInput || !statusOutput || !copyButton || !paybillNumber || !paybillAccount) {
+    return;
+  }
+
+  function setStatus(message, type = 'success') {
+    statusOutput.textContent = message;
+    statusOutput.classList.remove('donate-status-success', 'donate-status-error');
+    statusOutput.classList.add(type === 'error' ? 'donate-status-error' : 'donate-status-success');
+  }
+
+  async function copyDetails() {
+    const payload = [
+      'St. Rita Parish Donation Details',
+      `Paybill: ${paybillNumber.textContent.trim()}`,
+      `Account Number: ${paybillAccount.textContent.trim()}`,
+      amountInput.value ? `Amount: KES ${amountInput.value.trim()}` : null,
+      purposeInput.value ? `Purpose: ${purposeInput.value.trim()}` : null
+    ].filter(Boolean).join('\n');
+
+    try {
+      await navigator.clipboard.writeText(payload);
+      setStatus('Payment details copied. Use them in M-Pesa Paybill.', 'success');
+    } catch (err) {
+      console.error('Copy donation details failed:', err);
+      setStatus('Copy failed. You can still read the details on screen.', 'error');
+    }
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    setStatus('Payment details updated. Copy them and complete the Paybill payment.', 'success');
+  });
+
+  copyButton.addEventListener('click', copyDetails);
+}
+
 /* =========================
    MOBILE MENU
 ========================= */
@@ -411,6 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadAnnouncementsPreview();
   loadEventsPreview();
 
+  initDonateAutomation();
   injectChatbot();
   initCatholicChatbot();
   runFadeAnimations();

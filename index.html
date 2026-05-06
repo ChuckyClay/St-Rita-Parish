@@ -45,6 +45,7 @@
       <a href="announcements-events.html">Announcements & Events</a>
       <a href="daily-readings.html">Daily Readings</a>
       <a href="contact.html">Contact</a>
+      <a href="#donate" class="nav-donate">Donate</a>
       <a href="admin.html" target="_blank" aria-label="Admin panel (opens in new tab)">Admin</a>
     </nav>
   </header>
@@ -68,6 +69,52 @@
         <div class="hero-actions">
           <a href="st-rita-history.html" class="btn">Learn About Saint Rita</a>
           <a href="daily-readings.html" class="btn btn-outline">Daily Readings</a>
+          <a href="#donate" class="btn btn-donate">Donate</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="donate" class="feature-section donate-section fade-up delay-1">
+      <div class="section-heading">
+        <h2>Support St. Rita Parish</h2>
+        <p>Your generosity helps us sustain worship, outreach, and parish formation.</p>
+      </div>
+      <div class="card donate-card">
+        <p>
+          Every contribution supports the mission of our parish, including liturgy,
+          catechesis, youth ministry, and community care.
+        </p>
+        <div class="donate-grid">
+          <div class="donate-panel">
+            <h3>M-Pesa Paybill</h3>
+            <ul class="clean-list donate-list">
+              <li><strong>Paybill:</strong> <span id="paybill-number">7787954</span></li>
+              <li><strong>Account Number:</strong> <span id="paybill-account">Your Name</span></li>
+            </ul>
+            <p class="muted donate-note">
+              Open M-Pesa, choose Paybill, enter the details above, then use your name as the account number.
+            </p>
+          </div>
+
+          <form id="donate-form" class="donate-form" autocomplete="off">
+            <label for="donate-amount">Amount (KES)</label>
+            <input id="donate-amount" name="amount" type="number" min="1" step="1" placeholder="e.g. 500" />
+
+            <label for="donate-purpose">Purpose</label>
+            <select id="donate-purpose" name="purpose">
+              <option value="General Offering" selected>General Offering</option>
+              <option value="Mass Intention">Mass Intention</option>
+              <option value="Building Fund">Building Fund</option>
+              <option value="Youth Ministry">Youth Ministry</option>
+            </select>
+
+            <div class="hero-actions donate-actions">
+              <button type="submit" class="btn btn-donate">Update Details</button>
+              <button type="button" id="copy-donate-details" class="btn btn-donate">Copy Details</button>
+            </div>
+
+            <div id="donate-status" class="small muted" aria-live="polite"></div>
+          </form>
         </div>
       </div>
     </section>
