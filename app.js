@@ -1,4 +1,4 @@
-const API_BASE = 'https://st-rita-parish.onrender.com';
+const API_BASE = 'https://api.stritaparishnchiru.com';
 
 /* =========================
    UTILITIES
