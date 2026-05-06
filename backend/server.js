@@ -41,13 +41,27 @@ const authLimiter = rateLimit({
 // Middleware
 app.use(express.json());
 
+const allowedOrigins = [
+  'https://st-rita-parish-frontend.onrender.com',
+  'https://stritaparishnchiru.com',
+  'https://www.stritaparishnchiru.com',
+  'https://api.stritaparishnchiru.com',
+  'http://localhost:3000',
+  'http://127.0.0.1:5500'
+];
+
 app.use(cors({
-  origin: [
-    'https://st-rita-parish-frontend.onrender.com',
-    'https://api.stritaparishnchiru.com',
-    'http://localhost:3000',
-    'http://127.0.0.1:5500'
-  ],
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    if (/^https:\/\/[a-z0-9.-]+\.onrender\.com$/i.test(origin)) {
+      return callback(null, true);
+    }
+
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 
